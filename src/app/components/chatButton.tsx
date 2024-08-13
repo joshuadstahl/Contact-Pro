@@ -5,7 +5,7 @@ import { GetFancyDate } from './util/functions';
 import { useContext } from 'react';
 import { CurrentUserContext } from './context/currentUserContext';
 
-export default function chatButton({chat, selected, setSelected}: {chat: Chat, selected: boolean, setSelected: Function}) {
+export default function ChatButton({chat, selected, setSelected}: {chat: Chat, selected: boolean, setSelected: Function}) {
 
     //get the current application user from the context API
     let currUser = useContext(CurrentUserContext);
