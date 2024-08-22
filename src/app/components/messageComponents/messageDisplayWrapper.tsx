@@ -1,13 +1,33 @@
 import MessageDaySeperator from "./messageDaySeperator";
 import MsgStatus from "./msgStatus";
 import Message from "./message";
-import { Chat, Message as MessageC, msgType, User } from "../util/classes";
+import { Chat, Message as MessageC, msgDisplayType, User } from "../util/classes";
 import { GetFancyDate } from "../util/functions";
+import NewMessageSeperator from "./newMessageSeperator";
+import { useEffect } from "react";
 
-export default function MessageDisplayWrapper({chat} : {chat: Chat}) {
+//takes in a Chat object, and the id of the oldest unread message (if applicable)
+export default function MessageDisplayWrapper({chat, unreadMessagesStartID} : {chat: Chat, unreadMessagesStartID: string}) {
 
     let lastDate = ""; //the date of the last message processed
     let lastSender = ""; //the sender of the last message processed
+    let printNewMessageSep = false;
+    let printLastMessageID = false;
+
+    if (unreadMessagesStartID != "") {
+        //if there is a new message, scroll to the new message seperator
+        useEffect(() => {
+            document.getElementById("newMessagesSep")?.scrollIntoView();
+        })
+
+        
+    }
+    else {
+        //if there isn't an new message, scroll to the last message.
+        useEffect(() => {
+            document.getElementById("bottomOfChat")?.scrollIntoView();
+        })   
+    }
 
     return (
     <div key={chat.chatID}>
@@ -16,6 +36,16 @@ export default function MessageDisplayWrapper({chat} : {chat: Chat}) {
             //above as it goes and inserting appropriate message styles and 
             //seperators as needed
             chat.messages.map((x:MessageC) => {
+
+                //if the current message matches the id of the oldest unread message, 
+                //set a printing a new message seperator flag.
+                if (x.msgID == unreadMessagesStartID) {
+                    printNewMessageSep = true;
+                }
+                else {
+                    printNewMessageSep = false;
+                }
+
                 //if there last date doesn't match the current one, add
                 //a day seperator
                 if (x.timestamp.toLocaleDateString() != lastDate) {
@@ -26,23 +56,35 @@ export default function MessageDisplayWrapper({chat} : {chat: Chat}) {
                         lastSender = x.sender.userID;
                     }
                     return (
-                        <div key={x.timestamp.getMilliseconds()}>
+                        <div key={x.timestamp.getMilliseconds() + x.msgID}>
                             <MessageDaySeperator day={GetFancyDate(x.timestamp)}/>
-                            <Message key={x.msgID} theMessage={x} type={msgType.NEW}/>
+                            {printNewMessageSep && <NewMessageSeperator/>}
+                            <Message key={x.msgID + chat.chatID} theMessage={x} type={msgDisplayType.NEW}/>
                         </div>
                     )
                 }
                 else {
                     if (lastSender != x.sender.userID) {
                         lastSender = x.sender.userID;
-                        return (<Message key={x.msgID} theMessage={x} type={msgType.NEW}/>)
+                        return (
+                        <div key={x.timestamp.getMilliseconds() + x.msgID}>
+                            {printNewMessageSep && <NewMessageSeperator/>}
+                            <Message key={x.msgID + chat.chatID} theMessage={x} type={msgDisplayType.NEW}/>
+                        </div>)
                     }
                     else {
-                        return (<Message key={x.msgID} theMessage={x} type={msgType.CONT}/>)
+                        return (
+                        <div key={x.timestamp.getMilliseconds() + x.msgID}>
+                            {printNewMessageSep && <NewMessageSeperator/>}
+                            <Message key={x.msgID + chat.chatID} theMessage={x} type={msgDisplayType.CONT}/>
+                        </div>)
                     }
                 }
             })
         }
+        <div id="bottomOfChat">
+
+        </div>
     </div>
     )
 }

@@ -148,7 +148,7 @@ const config: Config = {
       'black':'#000',
       'white':'#FFF',
       'online_green' : '#00D16C',
-      'offline_grey' : '#888888',
+      'offline_gray' : '#888888',
       'do_not_disturb' : "#FF0000",
       'small-icon-border':'rgb (0,0,0,10%)',
     },

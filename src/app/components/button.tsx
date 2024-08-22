@@ -10,8 +10,8 @@ export default function Button({text = "this is button text", selected = false, 
 
     return (
     <Link href="" onClick={onClick} className={css}>
-        <div className="p-2.5">
-            <p className="text-sm text-center text-persian_green text-nowrap">{text}</p>
+        <div className="px-5 py-2.5">
+            <p className="text-sm text-center text-persian_green text-nowrap leading-none">{text}</p>
         </div>
     </Link>
     );

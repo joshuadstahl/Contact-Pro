@@ -3,8 +3,69 @@
 @tailwind utilities;
 
 
+.acntDrop .arrow {
+  transform: rotate(0turn);
+  transition-property: all;
+  animation-timing-function: cubic-bezier(.37,.18,.85,.66);
+  transition-duration: 200ms;
+}
+
+.acntDrop .arrowFlipped {
+  transform: rotate(0.5turn);
+}
+
+.acnt-dropdown {
+  pointer-events: auto;
+}
+
+.dropdownSlidedown {
+  top: 90%;
+  opacity: 0;
+  visibility: hidden;
+  transition-property: all;
+  animation-timing-function: cubic-bezier(.37,.18,.85,.66);
+  transition-duration: 200ms;
+}
+
+.dropdownSlidedownShown {
+  top: 100%;
+  visibility: visible;
+  opacity: 1;
+} 
+
+.dropdownSlideLeft {
+  left:110%;
+  right: 16px;
+  visibility: hidden;
+  opacity: 0;
+  transition-property: all;
+  animation-timing-function: cubic-bezier(.37,.18,.85,.66);
+  transition-duration: 200ms;
+}
+
+
+.dropdownSlideLeftShown {
+  left: -16px;
+  right: 0;
+  visibility: visible;
+  opacity: 1;
+}
+
+.dropdownSlideLeftUp {
+  left: -16px;
+  right: 0;
+  visibility: hidden;
+  opacity: 0;
+  top: 90%;
+}
+
+
+
+/* Messages hover*/
+
 .msg:hover .msgText {
   border-right-width: 1px;
+  border-right-color: theme('colors.french_gray.400');
 }
 
 .msg:hover .msgStats {
@@ -13,7 +74,8 @@
 }
 
 .msgText {
-  border-right-width: 0px;
+  border-right-width: 1px;
+  border-right-color: transparent;
   transition-property: all;
   animation-timing-function: cubic-bezier(.37,.18,.85,.66);
   transition-duration: 200ms;
@@ -38,9 +100,24 @@
 
 [contentEditable=true]:empty:before {
   content: attr(placeholder);
+  cursor:text;
   opacity: 0.6;
 }
 
+
+/* Random Utility Classes */
+
+.children-no-interact * {
+  pointer-events: none;
+}
+
+.no-click {
+  pointer-events: none;
+}
+
+.pointer-events-auto {
+  pointer-events: auto;
+}
 
 /* :root {
   --foreground-rgb: 0, 0, 0;

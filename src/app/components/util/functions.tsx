@@ -1,6 +1,7 @@
 import { userStatus } from "./classes";
 
-export function GetColorClass(status: userStatus) : string {
+//returns the color class name for a userStatus
+export function GetColorBgClass(status: userStatus) : string {
     if (status == userStatus.ONLINE) {
         return "bg-online_green";
     }
@@ -8,7 +9,32 @@ export function GetColorClass(status: userStatus) : string {
         return "bg-do_not_disturb";
     }
     else {
-        return "bg-offline_grey";
+        return "bg-offline_gray";
+    }
+}
+
+export function GetColorTextClass(status: userStatus): string {
+    if (status == userStatus.ONLINE) {
+        return "text-online_green";
+    }
+    else if (status == userStatus.DO_NOT_DISTURB) {
+        return "text-do_not_disturb";
+    }
+    else {
+        return "text-offline_gray";
+    }
+}
+
+//returns the appropriate text description for a userStatus
+export function GetStatusName(status: userStatus) : string {
+    if (status == userStatus.ONLINE) {
+        return "Online";
+    }
+    else if (status == userStatus.DO_NOT_DISTURB) {
+        return "Do Not Disturb";
+    }
+    else {
+        return "Offline";
     }
 }
 
@@ -26,4 +52,30 @@ export function GetFancyDate(theDate: Date) {
     )
     ||
     (theDate.toLocaleDateString()))
+}
+
+export function GetFancyTime(timestamp: Date) {
+    let msgTime = timestamp.toTimeString();
+    msgTime = msgTime.substring(0, 5);
+    let hours = timestamp.getHours();
+
+    if (hours < 10) {
+        msgTime = msgTime.substring(1, 5);
+    }
+
+    if (hours == 0) {
+        msgTime = "12:" + timestamp.getMinutes().toString().padStart(2, '0');
+    }
+
+    if (hours < 12) {
+        msgTime += " AM";
+    }
+    else if (hours == 12) {
+        msgTime += " PM";
+    } 
+    else {
+        msgTime = hours-12 + ":" + timestamp.getMinutes().toString().padStart(2, "0") + " PM";
+    }
+
+    return msgTime;
 }

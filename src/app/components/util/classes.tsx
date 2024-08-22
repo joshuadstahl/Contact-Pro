@@ -2,19 +2,29 @@ import { msgStatusEnum } from "../messageComponents/msgStatus";
 import { useState } from "react";
 
 
+//the status of a user
 export enum userStatus {
     OFFLINE,
     ONLINE,
     DO_NOT_DISTURB
 }
 
-export enum msgType {
+//the type of message to display
+export enum msgDisplayType {
     NEW,
     CONT
 }
 
 
-export class Chat {
+//stores the type of message
+export enum msgType {
+    TEXT,
+    PHOTO,
+    VIDEO,
+    AUDIO
+}
+
+export abstract class Chat {
 
     // constructor({name, messages, chatType = "chat", chatID}
     //     : {"name" : string, messages: Array<Message>, "chatType": string, "chatID": string }) {
@@ -36,6 +46,39 @@ export class Chat {
     public chatStatus = userStatus.OFFLINE;
     public chatID = "";
     public messages = new Array<Message>;
+
+    abstract newMessage({msg}:{msg:Message}) : void;
+
+    protected static sortMessages(msgs: Array<Message>) {
+        return( [... msgs].sort((a,b) => {
+            if (a.timestamp > b.timestamp) {
+                return 1;
+            }
+            else if (a.timestamp < b.timestamp) {
+                return -1;
+            }
+            return 0;
+        }));
+    }
+
+    protected setLastMessage() {
+        let lastmessage = this.messages[this.messages.length - 1]
+        if (lastmessage === undefined) {
+            this.lastMessage = undefined;
+            this.lastMessageTime = undefined;
+        }
+        else {
+            this.lastMessage = lastmessage.message;
+            this.lastMessageTime = lastmessage.timestamp;
+        }
+    }
+
+    public setAllMessagesRead() {
+        this.messages.forEach(msg => {
+            msg.read = true;
+        });
+        this.unreadMessages = 0;
+    }
 }
 
 export class UserChat extends Chat {
@@ -48,29 +91,20 @@ export class UserChat extends Chat {
         this.unreadMessages = messages.filter((x:Message) => x.read == false).length;
         this.chatStatus = user.status;
         this.chatID = chatID;
-        this.messages = [... messages].sort((a,b) => {
-            if (a.timestamp > b.timestamp) {
-                return 1;
-            }
-            else if (a.timestamp < b.timestamp) {
-                return -1;
-            }
-            return 0;
-        });
-        let lastmessage = this.messages[this.messages.length - 1]
-        if (lastmessage === undefined) {
-            this.lastMessage = undefined;
-            this.lastMessageTime = undefined;
-        }
-        else {
-            this.lastMessage = lastmessage.message;
-            this.lastMessageTime = lastmessage.timestamp;
-        }
+        this.messages = Chat.sortMessages(messages);
+        this.setLastMessage();
         this.otherUser = user;
 
     }
 
     public otherUser;
+
+    newMessage({ msg }: { msg: Message; }): void {
+        this.messages.push(msg);
+        this.messages = Chat.sortMessages(this.messages);
+        this.unreadMessages = this.messages.filter((x:Message) => x.read == false).length;
+        this.setLastMessage();
+    }
 
 }
 
@@ -91,20 +125,23 @@ export class GroupChat extends Chat {
             }
             return 0;
         });
-        let lastmessage = this.messages[this.messages.length - 1]
-        if (lastmessage === undefined) {
-            this.lastMessage = undefined;
-            this.lastMessageTime = undefined;
-        }
-        else {
-            this.lastMessage = lastmessage.message;
-            this.lastMessageTime = lastmessage.timestamp;
-        }
+        this.setLastMessage();
+    }
+
+    newMessage({ msg }: { msg: Message; }): void {
+        this.messages.push(msg);
+        this.messages = Chat.sortMessages(this.messages);
+        this.unreadMessages = this.messages.filter((x:Message) => x.read == false).length;
+        this.setLastMessage();
     }
 }
 
 export class BlankChat extends Chat {
     chatID = "0";
+
+    newMessage({ msg }: { msg: Message; }): void {
+        
+    }
 }
 
 
@@ -128,7 +165,8 @@ export class User {
 
 export class Message {
 
-    constructor({message, msgID, sender, timestamp, status, read} : {message: string, msgID: string, sender: User, timestamp: Date, status: msgStatusEnum, read: boolean}) {
+    constructor({message, msgID, sender, timestamp, status, read} : 
+        {message: string, msgID: string, sender: User, timestamp: Date, status: msgStatusEnum, read: boolean}) {
         this.message = message;
         this.sender = sender;
         this.timestamp = timestamp;
@@ -137,12 +175,23 @@ export class Message {
         this.msgID = msgID;
     }
 
-    public message = "";
+    public message = ""; //every type of message can have a text message to go along with it
+    public messageData = ""; //if the message type just happens to have other data, such as an image, audio, video, etc.
+    public messageType = msgType.TEXT;
     public sender : User;
+    //public recipient: User;
     public timestamp = new Date();
     public msgStatus = msgStatusEnum.Queued;
     public read = false;
     public msgID = "";
+
+}
+
+export class TextMessage {
+
+}
+
+export class ImageMessage {
 
 }
 

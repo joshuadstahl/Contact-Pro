@@ -11,7 +11,8 @@ import { CurrentUserContext } from "../components/context/currentUserContext";
 export default function App() {
 
     let joshstahl = new User({name: "Joshua Stahl", photo:"/jds-profile-smile-square-1mb.jpg", status: userStatus.ONLINE, userID: "joshstahl"})
-    let larrysmith = new User({name: "Larry Smith", photo:"", status: userStatus.DO_NOT_DISTURB, userID: "larrysmith"})
+    let larrysmith = new User({name: "Larry Smith", photo:"/larrysmith.jpg", status: userStatus.DO_NOT_DISTURB, userID: "larrysmith"})
+    let happyGuy = new User({name: "Happy Guy", photo: "/happyguy.jpg", status: userStatus.OFFLINE, userID: "happy.guy"})
 
     let yesterday = new Date();
     yesterday.setDate(11);
@@ -43,6 +44,14 @@ export default function App() {
             messages: new Array<Message>,
             photo: "",
             chatID: "14"
+        }
+    )
+
+    let chat4 = new UserChat(
+        {
+            user: happyGuy,
+            messages: [msg],
+            chatID: "55"
         }
     )
 
@@ -85,35 +94,125 @@ export default function App() {
 
 
 //   const impChats = [chat1, chat2, chat3, chat4, chat5, chat6, chat7, chat8, chat9, chat10, chat11, chat12, chat13, chat14, chat15, chat16];
-    const impChats = [chat1, chat2, chat3];
+  let impChats = [chat1, chat2, chat3, chat4];
   let chatgroups = impChats.map((chat: Chat)=> {
       return new ChatButtonGroup({chat: chat, selected: false})
   });
 
-  const [chats, setChats] = useState(chatgroups);
+  const [chatGroups, setChatGroups] = useState(chatgroups);
   const [selectedChat, setSelectedChat] = useState(new BlankChat);
+  const [currUser, updateCurrUser] = useState(joshstahl);
+
+  const [oldestUnreadMessageID, setOldestUnreadMessageID] = useState("");
+
+  function keepSyncedCurrUser(u: User) {
+    let userid = u.userID;
+    let copy = [...chatGroups];
+    copy.forEach(x => {
+        if (x.chat.constructor == UserChat) {
+            let chat2 = x.chat as UserChat;
+            if (chat2.otherUser.userID == userid) {
+                chat2.otherUser = u;
+                chat2.chatStatus = u.status;
+                x.chat = chat2;
+            } 
+        }
+    });
+
+    setChatGroups([...copy]);
+    updateCurrUser(u);
+  }
 
   function selectedChatToggler(id:string) {
-      chatgroups.forEach(element => {
-          element.selected = false;
-          if (element.chat.chatID == id) {
-              element.selected = true;
-              setSelectedChat(element.chat);
-          }
-      });
-      setChats(chatgroups);
+    let copy = [...chatGroups];
+    copy.forEach(element => {
+        element.selected = false;
+        if (element.chat.chatID == id) {
+            element.selected = true;
+            let temp = element.chat.messages.find((x) => x.read == false);
+            setOldestUnreadMessageID(temp !== undefined ? temp.msgID : "");
+            element.chat.setAllMessagesRead();
+            setSelectedChat(element.chat);
+        }
+    });
+    setChatGroups([...copy]);
+  }
+
+  function setUserStatusToOnline(userid:string) {
+    let copy = [...chatGroups];
+    copy.forEach(x => {
+        if (x.chat.constructor == UserChat) {
+            let chat2 = x.chat as UserChat;
+            if (chat2.otherUser.userID == userid) {
+                chat2.otherUser.status = userStatus.ONLINE;
+                chat2.chatStatus = userStatus.ONLINE;
+                x.chat = chat2;
+            } 
+        }
+    });
+
+    setChatGroups([...copy]);
+  }
+
+  function setUserStatusToOffline(userid:string) {
+    let copy = [...chatGroups];
+    copy.forEach(x => {
+        if (x.chat.constructor == UserChat) {
+            let chat2 = x.chat as UserChat;
+            if (chat2.otherUser.userID == userid) {
+                chat2.otherUser.status = userStatus.OFFLINE;
+                chat2.chatStatus = userStatus.OFFLINE;
+                x.chat = chat2;
+            } 
+        }
+    });
+
+    setChatGroups([...copy]);
+  }
+
+  function setUserStatusToDoNotDisturb(userid:string) {
+    let copy = [...chatGroups];
+    copy.forEach(x => {
+        if (x.chat.constructor == UserChat) {
+            let chat2 = x.chat as UserChat;
+            if (chat2.otherUser.userID == userid) {
+                chat2.otherUser.status = userStatus.DO_NOT_DISTURB;
+                chat2.chatStatus = userStatus.DO_NOT_DISTURB;
+                x.chat = chat2;
+            } 
+        }
+    });
+
+    setChatGroups([...copy]);
   }
 
 
+  function newMessage() {
+    let copy = [...chatGroups];
+    let read = false;
+    if (selectedChat.chatID == "32") read = true;
+    let bob = Math.random() * 10;
+    let msg = new Message({message: "This is a new pushed message.", msgID: bob.toString(), sender: larrysmith, timestamp: new Date(), status: msgStatusEnum.Read, read: read})
+    copy.forEach(x => {
+        if (x.chat.chatID == "32") {
+            x.chat.newMessage({msg: msg});
+        }
+    })
+    setChatGroups([...copy]);
+  }
+
 
   return (
-    <div className="top-0 bottom-0 left-0 right-0 absolute flex flex-col p-2.5 h-dvh">
-        <CurrentUserContext.Provider value={joshstahl}>
-            <Navbar profilePic="/jds-profile-smile-square-1mb.jpg" />
+    <div className="top-0 bottom-0 left-0 right-0 absolute flex flex-col p-2.5 h-dvh overflow-hidden">
+        <CurrentUserContext.Provider value={currUser}>
+            <Navbar profilePic="/jds-profile-smile-square-1mb.jpg" updateCurrUser={keepSyncedCurrUser}/>
             <div className="flex flex-row gap-2.5 h-full max-h-full overflow-hidden leading-none">  
-                <Sidebar chats={chats} selectedChatToggler={selectedChatToggler}/>
-                <ChatWindow chat={selectedChat}/>
+                <Sidebar chats={chatGroups} selectedChatToggler={selectedChatToggler}/>
+                <ChatWindow chat={selectedChat} oldestUnreadMessageID={oldestUnreadMessageID}/>
             </div>
+            <button onClick={() => setUserStatusToOnline("larrysmith")}>Online</button>
+            <button onClick={() => setUserStatusToOffline("larrysmith")}>Offline</button>
+            <button onClick={newMessage}>New Message</button>
         </CurrentUserContext.Provider>
     </div>
     

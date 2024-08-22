@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { Chat, userStatus } from './util/classes';
 import ChatPhoto from './chatPhoto';
-import { GetFancyDate } from './util/functions';
+import { GetFancyDate, GetFancyTime } from './util/functions';
 import { useContext } from 'react';
 import { CurrentUserContext } from './context/currentUserContext';
 
@@ -25,6 +25,13 @@ export default function ChatButton({chat, selected, setSelected}: {chat: Chat, s
         italicsMessage = "You: ";
     }
 
+    // let datetime = chat.lastMessageTime === undefined ? "N/A" : GetFancyDate(chat.lastMessageTime);
+    // if (chat.lastMessageTime !== undefined) {
+    //     if 
+    // }
+    // if (datetime[0] == "T" || datetime[0] == "Y")
+
+
     return (
         <Link onClick={() => setSelected(chat.chatID)} id={chat.chatID} href="" className={"hover:bg-french_gray-100 " +
         "focus:bg-french_gray-200 active:bg-french_gray rounded-l-my rounded-t-my rounded-br " + 
@@ -36,8 +43,8 @@ export default function ChatButton({chat, selected, setSelected}: {chat: Chat, s
                 <div className="basis-auto grow shrink pl-4 pt-2">
                     <div className="grid grid-cols-1">
                         <div className="flex flex-row gap-1 mb-1">
-                            <div className="text-normal grow text-persian_green text-base leading-none">{chat.name ?? "Chat name 1"}</div>
-                            <div className="font-light text-charcoal text-sm leading-none">{chat.lastMessageTime === undefined ? "N/A" : GetFancyDate(chat.lastMessageTime)}</div>
+                            <div className="text-normal grow text-persian_green text-base leading-none truncate" title={chat.name}>{chat.name ?? "Chat name 1"}</div>
+                            <div className="font-light text-charcoal text-sm leading-none" title={chat.lastMessageTime === undefined ? "N/A" : GetFancyTime(chat.lastMessageTime)}>{chat.lastMessageTime === undefined ? "N/A" : GetFancyDate(chat.lastMessageTime)}</div>
                         </div>
                         <div className="flex flex-row">
                             {italics && <p className='font-light text-charcoal text-xs italic mr-1'>{italicsMessage}</p>}

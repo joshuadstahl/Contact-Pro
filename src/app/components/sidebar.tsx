@@ -5,6 +5,7 @@ import ChatButton from './chatButton';
 import { Chat, ChatButtonGroup, GroupChat, UserChat } from './util/classes';
 import Button from "./button";
 import Copyright from './copyright';
+import Link from 'next/link';
 
 function Sidebar({chats, selectedChatToggler} : {chats: ChatButtonGroup[], selectedChatToggler:Function}) {
   
@@ -17,11 +18,14 @@ function Sidebar({chats, selectedChatToggler} : {chats: ChatButtonGroup[], selec
         setSelectedButton(temp);
     }
 
-    let peoplechats = chats.filter((grp: ChatButtonGroup) => {
-        return grp.chat.constructor == UserChat;
-    });
-    let groupchats = chats.filter((grp: ChatButtonGroup) => {
-        return grp.chat.constructor == GroupChat;
+    let sorted = chats.sort((a, b) => {
+        if ((a.chat.lastMessageTime ?? 0) > (b.chat.lastMessageTime ?? 0)) {
+            return -1;
+        }
+        else if ((a.chat.lastMessageTime ?? 0) < (b.chat.lastMessageTime ?? 0)) {
+            return 1;
+        }
+        return a.chat.name.localeCompare(b.chat.name);
     })
 
     return (
@@ -29,38 +33,39 @@ function Sidebar({chats, selectedChatToggler} : {chats: ChatButtonGroup[], selec
         border-solid border-1 border-cadet_gray-300 rounded-l-my
         bg-ghost_white flex flex-col flex-cols-2 resize-x">
 
-            <div className='flex flex-row flex-rows-1 my-4 gap-3.5 justify-center'>   
+            <h1 className='text-2xl	text-center mt-2.5 shrink-0'>Menu</h1>   
+            <div className='flex flex-row flex-rows-1 mt-5 mb-7 gap-5 xl:gap-8 justify-center shrink-0'>
+                
                 <div className='flex flex-row justify-end'>
                     <Button text="Chats" onClick={() => buttonToggler(0)} selected={selectedButton[0]}/>
                 </div> 
                 <div className='flex flex-row justify-start'>
-                    <Button text="Group Chats" onClick={() => buttonToggler(1)} selected={selectedButton[1]}/>
+                    <Button text="Friends" onClick={() => buttonToggler(1)} selected={selectedButton[1]}/>
                 </div>
             </div>
 
             <div className='flex flex-col mb-5 min-h-0 grow'>
                 
                 {/* These are the headers for the tabs */}
-                <h2 className={"flex text-xl text-left "  + (selectedButton[0] ? "block" : "hidden")}>Chats</h2>
-                <h2 className={"flex text-xl text-left "  + (selectedButton[1] ? "block" : "hidden")}>Group Chats</h2>
+                <div className='flex flex-row flex-nowrap items-center'>
+                    <h2 className={"flex text-xl text-left "  + (selectedButton[0] ? "block" : "hidden")}>Chats</h2>
+                    <h2 className={"flex text-xl text-left "  + (selectedButton[1] ? "block" : "hidden")}>Friends</h2>
+                    <button><i className="bi bi-plus-square stroke-1 text-black ml-3"></i></button>
+                </div>
 
                 {/* This is the code for the Chats Tab */}
                 <div className={"grid grid-col-1 gap-1 overflow-auto custom_scrollbars " + (selectedButton[0] ? "block" : "hidden")}>  
                     {
-                        peoplechats.map((grp) => {
+                        sorted.map((grp) => {
                             return <ChatButton key={grp.chat.chatID} chat={grp.chat} selected={grp.selected} setSelected={selectedChatToggler}/>
                         })
                     }
                 </div>
 
-                {/* This is the code for the Group Chats Tab */}
+                {/* This is the code for the Friends Tab */}
                 
                 <div className={"grid grid-col-1 gap-1 overflow-auto custom_scrollbars " + (selectedButton[1] ? "block" : "hidden")}>
-                    {
-                        groupchats.map((grp) => {
-                            return <ChatButton key={grp.chat.chatID} chat={grp.chat} selected={grp.selected} setSelected={selectedChatToggler}/>
-                        })
-                    }
+                    
                 </div>
                 
             </div>
