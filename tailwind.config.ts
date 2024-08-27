@@ -173,7 +173,8 @@ const config: Config = {
       'lg': '0.5rem',
       'full': '9999px',
       'large': '12px',
-      'my':'10px',
+      'my':'0.625rem',
+      '5px':'0.3125rem'
     }
   },
   plugins: [],

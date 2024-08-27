@@ -10,7 +10,7 @@ export default function Message({theMessage, type} : {theMessage: MessageClass, 
     
     let currDate = new Date();
     let currUser = useContext(CurrentUserContext);
-    let msgFromUser = theMessage.sender.userID == currUser.userID;
+    let msgFromUser = theMessage.sender.username == currUser.username;
 
     return ((type == msgDisplayType.NEW && 
 

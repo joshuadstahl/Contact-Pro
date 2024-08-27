@@ -20,7 +20,7 @@ export default function ChatButton({chat, selected, setSelected}: {chat: Chat, s
         italics = true;
         italicsMessage = "Send a new message to " + chat.name;
     }
-    else if (chat.messages[chat.messages.length - 1].sender.userID == currUser.userID) {
+    else if (chat.messages[chat.messages.length - 1].sender.username == currUser.username) {
         italics = true;
         italicsMessage = "You: ";
     }

@@ -14,20 +14,22 @@ export default function MessageDisplayWrapper({chat, unreadMessagesStartID} : {c
     let printNewMessageSep = false;
     let printLastMessageID = false;
 
+    let scrollToId = "";
+    //set the scrollToId
     if (unreadMessagesStartID != "") {
         //if there is a new message, scroll to the new message seperator
-        useEffect(() => {
-            document.getElementById("newMessagesSep")?.scrollIntoView();
-        })
-
-        
+        scrollToId = "newMessagesSep";
     }
     else {
         //if there isn't an new message, scroll to the last message.
-        useEffect(() => {
-            document.getElementById("bottomOfChat")?.scrollIntoView();
-        })   
+        scrollToId = "bottomOfChat";
     }
+
+    useEffect(() => {
+        if (scrollToId != "") {
+            document.getElementById("newMessagesSep")?.scrollIntoView();
+        }
+    })
 
     return (
     <div key={chat.chatID}>
@@ -52,8 +54,8 @@ export default function MessageDisplayWrapper({chat, unreadMessagesStartID} : {c
                     lastDate = x.timestamp.toLocaleDateString();
                     //if the last sender doesn't match the current sender
                     //reset the lastSender
-                    if (lastSender != x.sender.userID) {
-                        lastSender = x.sender.userID;
+                    if (lastSender != x.sender.username) {
+                        lastSender = x.sender.username;
                     }
                     return (
                         <div key={x.timestamp.getMilliseconds() + x.msgID}>
@@ -64,8 +66,8 @@ export default function MessageDisplayWrapper({chat, unreadMessagesStartID} : {c
                     )
                 }
                 else {
-                    if (lastSender != x.sender.userID) {
-                        lastSender = x.sender.userID;
+                    if (lastSender != x.sender.username) {
+                        lastSender = x.sender.username;
                         return (
                         <div key={x.timestamp.getMilliseconds() + x.msgID}>
                             {printNewMessageSep && <NewMessageSeperator/>}

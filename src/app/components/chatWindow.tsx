@@ -39,7 +39,7 @@ function ChatWindow({chat, oldestUnreadMessageID} : {chat: Chat | UserChat | Gro
                         {statusBubble && <div title={GetStatusName(chat.chatStatus)} className={"absolute bottom-0 right-0 rounded-full " + statusColor + " w-2.5 h-2.5"}></div> }
                     </div>
                     <h2 className='ml-2.5 text-persian_green text-xl'>{chat.name}</h2>
-                    {chat.constructor == UserChat &&<p className='text-charcoal ml-2.5'>({chat.otherUser.userID})</p>}
+                    {chat.constructor == UserChat &&<p className='text-charcoal ml-2.5'>({chat.otherUser.username})</p>}
                 </div>
                 <div className='grow flex flex-col border-solid border-1 border-cadet_gray-300 rounded-br-my p-5 overflow-x-hidden overflow-y-auto'>
                     

@@ -7,6 +7,7 @@ import { useContext, useEffect, useState } from "react";
 import { GetColorBgClass, GetColorTextClass, GetStatusName } from './util/functions';
 import DropdownMenuItem from "./dropdownMenuItem";
 import { userStatus, User } from "./util/classes";
+import { Logout } from "./util/serverFunctions";
 
 const assistant = Assistant(
     { 
@@ -101,7 +102,7 @@ export default function Navbar({profilePic = "", updateCurrUser} : {profilePic: 
         <div className="flex-initial mb-2.5">
             <div className="flex flex-row pl-5 border-solid border-1 border-cadet_gray-400 rounded-my bg-white">
                 <div className="flex flex-row flex-nowrap items-center">
-                    <h1 className={assistant.className + " font-bold text-2xl text-persian_green"}>Contact Pro</h1>
+                    <h1 className={assistant.className + " font-bold text-3xl text-persian_green"}>Contact Pro</h1>
                 </div>
                 <div className="flex flex-row flex-nowrap items-center grow place-content-end">
 
@@ -115,7 +116,7 @@ export default function Navbar({profilePic = "", updateCurrUser} : {profilePic: 
                                 </div>
                                 <div className="ml-2.5">
                                     <h2 className="text-left text-xs text-coral">{currUser.name}</h2>
-                                    <h2 className="text-left text-xs">({currUser.userID})</h2>
+                                    <h2 className="text-left text-xs">({currUser.username})</h2>
                                 </div>
                                 <Image className={"filter-charcoal ml-3 arrow " + ((toggled || statusToggled) ? "arrowFlipped" : "")} alt='' src='/icons/arrow-down.svg' width={20} height={20}></Image>
                             </div>
@@ -136,10 +137,17 @@ export default function Navbar({profilePic = "", updateCurrUser} : {profilePic: 
                                 <p className="text-xs text-charcoal">Set Status</p>
                                 <i title={GetStatusName(currUser.status)} className={"bi bi-circle-fill ml-1.5 " + statusTextColor}></i>
                             </DropdownMenuItem>
-                            <DropdownMenuItem>
-                                <i className="bi bi-door-open ml-1.5 mr-1.5 text-do_not_disturb"></i>
-                                <p className="text-xs text-do_not_disturb">Log out</p>
-                            </DropdownMenuItem>
+                            <div className="flex flex-row">
+                                <form className="grow flex flex-row" action={async (e) => {await Logout()}}>
+                                    <button type="submit" className={"grow hover:bg-cadet_gray-100 text-left focus:bg-cadet_gray-100 " + 
+                                        "active:bg-cadet_gray-300 py-1.5 border-b border-french_gray-200 "}>
+                                        <div className="no-click flex flex-row flex-nowrap items-center children-no-interact">
+                                            <i className="bi bi-door-open ml-1.5 mr-1.5 text-do_not_disturb"></i>
+                                            <p className="text-xs text-do_not_disturb">Log out</p>
+                                        </div>
+                                    </button>
+                                </form>
+                            </div>
                         </div>
                         <div className={"dropdownSlideLeft absolute top-full bg-white rounded-my border " +
                             "border-cadet_gray-300 p-2.5 z-10 noDropClose" + (statusToggled ? " dropdownSlideLeftShown" : "") + (slideUp ? " dropdownSlideLeftUp" : "")}>

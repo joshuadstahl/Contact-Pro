@@ -2,7 +2,39 @@
 @tailwind components;
 @tailwind utilities;
 
+/* new user modal */
 
+
+.modalBackdrop {
+  opacity: 0;
+  visibility: hidden;
+  transition-property: all;
+  animation-timing-function: cubic-bezier(.37,.18,.85,.66);
+  transition-duration: 200ms;
+}
+
+.modalBackdropShow {
+  opacity: 0.5;
+  visibility: visible;
+  
+}
+
+.modal {
+  opacity: 0;
+  transform: scale(0.5);
+  visibility: hidden;
+  transition-property: all;
+  animation-timing-function: cubic-bezier(.37,.18,.85,.66);
+  transition-duration: 200ms;
+}
+
+.modalShow {
+  opacity: 1;
+  transform: scale(1);
+  visibility: visible;
+}
+
+/* Dropdown and dropdown menus */
 .acntDrop .arrow {
   transform: rotate(0turn);
   transition-property: all;

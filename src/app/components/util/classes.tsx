@@ -148,17 +148,19 @@ export class BlankChat extends Chat {
 
 export class User {
 
-    constructor({name, photo, status, userID}: {name: string, photo: string, status: userStatus, userID : string}) {
+    constructor({name, photo, status, email, username}: {name: string, photo: string, status: userStatus, email: string, username : string}) {
         this.name = name;
         this.photo = photo;
         this.status = status;
-        this.userID = userID;
+        this.email = email;
+        this.username = username;
     }
 
     public name = "";
     public photo = "";
     public status = userStatus.OFFLINE;
-    public userID = "";
+    public email = "";
+    public username = "";
 }
 
 
