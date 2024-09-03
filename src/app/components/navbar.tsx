@@ -1,13 +1,13 @@
 import { Assistant } from "next/font/google";
 import ProfilePhoto  from "./profilePhoto";
 import { CurrentUserContext } from './context/currentUserContext';
-import Link from "next/link";
+import { UserRepositoryContext } from "./context/userRepositoryContext";
 import Image from "next/image";
 import { useContext, useEffect, useState } from "react";
 import { GetColorBgClass, GetColorTextClass, GetStatusName } from './util/functions';
 import DropdownMenuItem from "./dropdownMenuItem";
-import { userStatus, User } from "./util/classes";
-import { Logout } from "./util/serverFunctions";
+import { userStatus, User } from "../classes/user";
+import { userAgent } from "next/server";
 
 const assistant = Assistant(
     { 
@@ -15,10 +15,14 @@ const assistant = Assistant(
     }
 );
 
-export default function Navbar({profilePic = "", updateCurrUser} : {profilePic: string, updateCurrUser: Function}) {
-    let currUser = useContext(CurrentUserContext);
-    let statusColor = GetColorBgClass(currUser.status);
-    let statusTextColor = GetColorTextClass(currUser.status);
+export default function Navbar({sendWSMessage, setStatus, updateUserRepo, toggleLogoutModal} : {sendWSMessage:Function, setStatus: Function, updateUserRepo: Function, toggleLogoutModal: Function}) {
+    const currUserContext = useContext(CurrentUserContext); //the current user's id
+    const userRepo = useContext(UserRepositoryContext); //the user repository
+    let currUser = userRepo[currUserContext]; //get the current user object
+
+    let statusColor = GetColorBgClass(currUser.status); //get the user's current status color class
+    let statusTextColor = GetColorTextClass(currUser.status); //get the user's current status' name
+
     //state to keep track if the dropdown is open or not
     const [toggled, setToggled] = useState(false);
 
@@ -54,9 +58,18 @@ export default function Navbar({profilePic = "", updateCurrUser} : {profilePic: 
 
     //updates the upper level current user with the new status
     function updateUserStatus(newStatus: userStatus) {
-        let copy = new User(currUser);
-        copy.status = newStatus;
-        updateCurrUser(copy);
+        let out = {
+            msgType: "userUpdate",
+            data: {
+                updateType: "status",
+                status: newStatus
+            }
+        }
+        sendWSMessage(out);
+        setStatus(currUserContext, newStatus);
+        // let copy = {...userRepo};
+        // copy[currUserContext].status = newStatus;
+        // updateUserRepo(copy);
     }
 
     //sets the current user's status to do not disturb
@@ -137,17 +150,10 @@ export default function Navbar({profilePic = "", updateCurrUser} : {profilePic: 
                                 <p className="text-xs text-charcoal">Set Status</p>
                                 <i title={GetStatusName(currUser.status)} className={"bi bi-circle-fill ml-1.5 " + statusTextColor}></i>
                             </DropdownMenuItem>
-                            <div className="flex flex-row">
-                                <form className="grow flex flex-row" action={async (e) => {await Logout()}}>
-                                    <button type="submit" className={"grow hover:bg-cadet_gray-100 text-left focus:bg-cadet_gray-100 " + 
-                                        "active:bg-cadet_gray-300 py-1.5 border-b border-french_gray-200 "}>
-                                        <div className="no-click flex flex-row flex-nowrap items-center children-no-interact">
-                                            <i className="bi bi-door-open ml-1.5 mr-1.5 text-do_not_disturb"></i>
-                                            <p className="text-xs text-do_not_disturb">Log out</p>
-                                        </div>
-                                    </button>
-                                </form>
-                            </div>
+                            <DropdownMenuItem callback={toggleLogoutModal}>
+                                <i className="bi bi-door-open ml-1.5 mr-1.5 text-do_not_disturb"></i>
+                                <p className="text-xs text-do_not_disturb">Log out</p>
+                            </DropdownMenuItem>
                         </div>
                         <div className={"dropdownSlideLeft absolute top-full bg-white rounded-my border " +
                             "border-cadet_gray-300 p-2.5 z-10 noDropClose" + (statusToggled ? " dropdownSlideLeftShown" : "") + (slideUp ? " dropdownSlideLeftUp" : "")}>

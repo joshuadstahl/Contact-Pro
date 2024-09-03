@@ -1,24 +1,31 @@
 'use client'
-import React, { EventHandler, FormEvent, FormEventHandler, useEffect, useState } from 'react';
-import { Chat, ChatButtonGroup, GroupChat, Message as MessageClass, User, UserChat, msgDisplayType, userStatus } from './util/classes'
+import React, { EventHandler, FormEvent, FormEventHandler, useContext, useEffect, useState } from 'react';
+import { Chat, GroupChat, UserChat } from '../classes/chats';
+import { ChatButtonGroup } from '../classes/chatButtonGroup';
+import { Message as MessageClass, msgDisplayType, msgType } from '../classes/messages';
+import { User, userStatus } from '../classes/user';
 import ProfilePhoto from './profilePhoto';
-import Message from "./messageComponents/message";
-import { msgStatusEnum } from './messageComponents/msgStatus';
-import MessageDaySeperator from './messageComponents/messageDaySeperator';
-import Link from 'next/link';
 import Image from 'next/image';
 import MessageDisplayWrapper from './messageComponents/messageDisplayWrapper';
 import { GetColorBgClass, GetStatusName } from './util/functions';
+import { userRepository } from '../app/page';
+import { CurrentUserContext } from './context/currentUserContext';
 
-function ChatWindow({chat, oldestUnreadMessageID} : {chat: Chat | UserChat | GroupChat, oldestUnreadMessageID: string}) {
+
+function ChatWindow({chat, oldestUnreadMessageID, userRepo, sendWSMessage, addNewMessage, chatGroups, setChatGroups} : {chat: Chat | UserChat | GroupChat, oldestUnreadMessageID: string, userRepo: userRepository, sendWSMessage:Function, addNewMessage: Function, chatGroups: Array<ChatButtonGroup>, setChatGroups: Function}) {
     
-    //get the color of the status bubble
-    let statusColor = GetColorBgClass(chat.chatStatus);
+    const currUser = useContext(CurrentUserContext);
 
-    //determine whether to show the status bubble or not.
-    let statusBubble = true;
-    if (chat.constructor != UserChat) {
-        statusBubble = false;
+    //get the color of the status bubble
+    let statusColor = GetColorBgClass(chat.constructor == UserChat ? userRepo[chat.otherUser._id].status : chat.chatStatus);
+
+    //determine the profile photo
+    let photo;
+    if (chat.constructor == UserChat) {
+        photo = userRepo[chat.otherUser._id].photo;
+    }
+    else {
+        photo = chat.photo;
     }
 
     //determine what kind of screen to show
@@ -26,6 +33,29 @@ function ChatWindow({chat, oldestUnreadMessageID} : {chat: Chat | UserChat | Gro
     if (chat.chatID == "0") {
         type = "empty";
     }
+
+    function sendMessage() {
+        let messageField = document.getElementById("messageField");
+        let message = messageField?.textContent ?? "blank message";
+        let out = {
+            msgType: "message",
+            data: {
+                _id: (Math.random() * 5000).toString(),
+                chatID: chat.chatID, 
+                message: message,
+                messageData: "", 
+                messageType: msgType.TEXT
+            }
+        }
+        if(messageField !== undefined && messageField?.textContent !== undefined){
+            messageField.textContent = "";
+        }
+        let data = out.data;
+        addNewMessage(new MessageClass({...data, sender: userRepo[currUser], timestamp: new Date(), read: true, status:0}), chat.chatID);
+        sendWSMessage(out);
+    }
+
+    
 
     return (
         (type == "full" && 
@@ -35,11 +65,11 @@ function ChatWindow({chat, oldestUnreadMessageID} : {chat: Chat | UserChat | Gro
             bg-ghost_white flex flex-col">
                 <div className='flex flex-row flex-nowrap items-center py-2.5 pl-5 border-solid border-1 border-persian_orange rounded-tr-my'>
                     <div className="relative">
-                        <ProfilePhoto photo={chat.photo} tSizeNumber={10}/>
-                        {statusBubble && <div title={GetStatusName(chat.chatStatus)} className={"absolute bottom-0 right-0 rounded-full " + statusColor + " w-2.5 h-2.5"}></div> }
+                        <ProfilePhoto photo={photo} tSizeNumber={10}/>
+                        {chat.constructor == UserChat && <div title={GetStatusName(userRepo[chat.otherUser._id].status)} className={"absolute bottom-0 right-0 rounded-full " + statusColor + " w-2.5 h-2.5"}></div> }
                     </div>
                     <h2 className='ml-2.5 text-persian_green text-xl'>{chat.name}</h2>
-                    {chat.constructor == UserChat &&<p className='text-charcoal ml-2.5'>({chat.otherUser.username})</p>}
+                    {chat.constructor == UserChat && <p className='text-charcoal ml-2.5'>({chat.otherUser.username})</p>}
                 </div>
                 <div className='grow flex flex-col border-solid border-1 border-cadet_gray-300 rounded-br-my p-5 overflow-x-hidden overflow-y-auto'>
                     
@@ -55,12 +85,12 @@ function ChatWindow({chat, oldestUnreadMessageID} : {chat: Chat | UserChat | Gro
                             </div>
                             {
                                 //@ts-ignore
-                                <div contentEditable={true} placeholder={"Type a message"}
+                                <div id="messageField" contentEditable={true} placeholder={"Type a message"}
                                     className='outline-none text-wrap break-all whitespace-pre-wrap overflow-hidden grow'>
                                 </div>
                             }
                             <div className='shrink-0 ml-2.5' style={{maxWidth: "15px", maxHeight:"15px"}}>
-                                <button><i className="bi bi-send stroke-1 text-charcoal"></i></button>
+                                <button onClick={sendMessage}><i className="bi bi-send stroke-1 text-charcoal"></i></button>
                             </div>
                         </div>
                     </div>

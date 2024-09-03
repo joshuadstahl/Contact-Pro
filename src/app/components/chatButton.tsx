@@ -1,14 +1,16 @@
 import Link from 'next/link';
-import { Chat, userStatus } from './util/classes';
+import { Chat } from '../classes/chats';
 import ChatPhoto from './chatPhoto';
 import { GetFancyDate, GetFancyTime } from './util/functions';
 import { useContext } from 'react';
 import { CurrentUserContext } from './context/currentUserContext';
+import { UserRepositoryContext } from './context/userRepositoryContext';
 
 export default function ChatButton({chat, selected, setSelected}: {chat: Chat, selected: boolean, setSelected: Function}) {
 
     //get the current application user from the context API
-    let currUser = useContext(CurrentUserContext);
+    const currUser = useContext(CurrentUserContext);
+    const userRepo = useContext(UserRepositoryContext);
 
     //set the last message text to "Send a new message to {chat's name}"
     //if the last message is not existant. Also set this message to be
@@ -20,7 +22,7 @@ export default function ChatButton({chat, selected, setSelected}: {chat: Chat, s
         italics = true;
         italicsMessage = "Send a new message to " + chat.name;
     }
-    else if (chat.messages[chat.messages.length - 1].sender.username == currUser.username) {
+    else if (chat.messages[chat.messages.length - 1].sender._id == currUser) {
         italics = true;
         italicsMessage = "You: ";
     }

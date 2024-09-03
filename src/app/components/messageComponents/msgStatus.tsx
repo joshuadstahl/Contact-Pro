@@ -1,14 +1,7 @@
 import { GetFancyTime } from "../util/functions";
+import { msgStatusEnum } from "@/app/classes/messages";
 
-export enum msgStatusEnum {
-    Queued,
-    Sending,
-    Sent,
-    Delivered,
-    Read,
-    ReadCompact
-}
-export default function MsgStatus({timestamp, msgStatus, msgFromUser} : {timestamp: Date, msgStatus: msgStatusEnum, msgFromUser: boolean}) {
+export default function MsgStatus({timestamp, msgStatus, msgFromUser} : {timestamp: Date, msgStatus?: msgStatusEnum, msgFromUser: boolean}) {
 
     let msgTime = GetFancyTime(timestamp);
 

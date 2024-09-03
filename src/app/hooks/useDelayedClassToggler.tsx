@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-export default function useDelayedClassToggler([on, off] : string[], state: boolean, delay:number) {
+export default function useDelayedClassToggler([on, off] : string[], state: boolean, delayOn:number = 200, delayOff:number = 500) {
 
     const [shouldRender, setShouldRender] = useState(false);
     const [currentClass, setCurrentClass] = useState(state ? on : off);
@@ -13,20 +13,20 @@ export default function useDelayedClassToggler([on, off] : string[], state: bool
             setCurrentClass(off);
             timeoutId2 = window.setTimeout(
                 () => setCurrentClass(on), 
-                delay
+                delayOn
             );
         }
         else if(!state && shouldRender) {
             setCurrentClass(off);
             timeoutId = window.setTimeout(
                 () => setShouldRender(false), 
-                delay
+                delayOff
             );
         }
         return () => {
             clearTimeout(timeoutId)
         };
-    }, [state, delay, shouldRender, on, off]);
+    }, [state, delayOn, delayOff, shouldRender, on, off]);
 
     return [shouldRender, currentClass];
 }

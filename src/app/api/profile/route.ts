@@ -1,7 +1,8 @@
-import { User, userStatus } from "@/app/components/util/classes";
+import { User, userStatus } from "@/app/classes/user";
 import { auth } from "@/auth";
 import {Collection, Db, MongoClient } from "mongodb";
 import { NextResponse } from "next/server";
+import { ServerUser } from "@/app/classes/serverUser";
 
 
 export const GET = auth(async function GET(req) {
@@ -13,29 +14,32 @@ export const GET = auth(async function GET(req) {
 
         const userCollection: Collection = db.collection("users");
 
-        let user = await userCollection.findOne<User>({email: session?.user?.email});
+        let user = await userCollection.findOne<ServerUser>({email: session?.user?.email});
 
         let signUp = false;
         if (user === null) {
             console.log("no user!");
             signUp = true;
-            let newU = new User(
+            let newU = new ServerUser(
                 {
                     name: session?.user?.name ?? "", 
                     photo: session?.user?.image ?? "/static/noPhoto.png",
                     status: userStatus.ONLINE,
                     email: session?.user?.email ?? "",
-                    username: session?.user?.email ?? ""
+                    username: session?.user?.email ?? "",
+                    savedStatus: null
                 }
             );
-            await userCollection.insertOne(newU);
+            await userCollection.insertOne({...newU, _id:undefined});
             user = newU;
         }
 
         let out = {
-            user: user,
+            user: new User({...user, status:user.savedStatus === null ? user.status : user.savedStatus}),
             newUser: signUp
         };
+
+        client.close();
 
         return NextResponse.json(out);
     }

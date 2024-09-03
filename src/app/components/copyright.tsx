@@ -16,7 +16,7 @@ export default function Copyright({position = "left"}) {
 
     return (
         <div className="shrink-0">
-            <p className={"font-light text-sm " + classNames}>Contact Pro © 2024 - Joshua Stahl</p>
+            <p className={"font-light text-xs " + classNames}>Contact Pro © 2024 - Joshua Stahl</p>
         </div>
     );
 }

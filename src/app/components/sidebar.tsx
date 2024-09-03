@@ -1,11 +1,9 @@
 'use client'
-
-import { Dispatch, SetStateAction, useState } from 'react';
+import { useState } from 'react';
 import ChatButton from './chatButton';
-import { Chat, ChatButtonGroup, GroupChat, UserChat } from './util/classes';
+import { ChatButtonGroup } from '../classes/chatButtonGroup';
 import Button from "./button";
 import Copyright from './copyright';
-import Link from 'next/link';
 
 function Sidebar({chats, selectedChatToggler} : {chats: ChatButtonGroup[], selectedChatToggler:Function}) {
   

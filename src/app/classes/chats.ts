@@ -1,28 +1,5 @@
-import { msgStatusEnum } from "../messageComponents/msgStatus";
-import { useState } from "react";
-
-
-//the status of a user
-export enum userStatus {
-    OFFLINE,
-    ONLINE,
-    DO_NOT_DISTURB
-}
-
-//the type of message to display
-export enum msgDisplayType {
-    NEW,
-    CONT
-}
-
-
-//stores the type of message
-export enum msgType {
-    TEXT,
-    PHOTO,
-    VIDEO,
-    AUDIO
-}
+import { Message } from "./messages";
+import { userStatus, User } from "./user";
 
 export abstract class Chat {
 
@@ -83,17 +60,17 @@ export abstract class Chat {
 
 export class UserChat extends Chat {
 
-    constructor({user, messages, chatID}
-        : {user : User, messages: Array<Message>, "chatID": string }) {
+    constructor({otherUser, messages, chatID, name}
+        : {otherUser : User, messages: Array<Message>, chatID: string, name: string }) {
         super();
-        this.name = user.name;
-        this.photo = user.photo;
+        this.name = name == "" ? otherUser.name : name;
+        this.photo = otherUser.photo;
         this.unreadMessages = messages.filter((x:Message) => x.read == false).length;
-        this.chatStatus = user.status;
+        this.chatStatus = otherUser.status;
         this.chatID = chatID;
         this.messages = Chat.sortMessages(messages);
         this.setLastMessage();
-        this.otherUser = user;
+        this.otherUser = otherUser;
 
     }
 
@@ -142,68 +119,4 @@ export class BlankChat extends Chat {
     newMessage({ msg }: { msg: Message; }): void {
         
     }
-}
-
-
-
-export class User {
-
-    constructor({name, photo, status, email, username}: {name: string, photo: string, status: userStatus, email: string, username : string}) {
-        this.name = name;
-        this.photo = photo;
-        this.status = status;
-        this.email = email;
-        this.username = username;
-    }
-
-    public name = "";
-    public photo = "";
-    public status = userStatus.OFFLINE;
-    public email = "";
-    public username = "";
-}
-
-
-
-export class Message {
-
-    constructor({message, msgID, sender, timestamp, status, read} : 
-        {message: string, msgID: string, sender: User, timestamp: Date, status: msgStatusEnum, read: boolean}) {
-        this.message = message;
-        this.sender = sender;
-        this.timestamp = timestamp;
-        this.msgStatus = status;
-        this.read = read;
-        this.msgID = msgID;
-    }
-
-    public message = ""; //every type of message can have a text message to go along with it
-    public messageData = ""; //if the message type just happens to have other data, such as an image, audio, video, etc.
-    public messageType = msgType.TEXT;
-    public sender : User;
-    //public recipient: User;
-    public timestamp = new Date();
-    public msgStatus = msgStatusEnum.Queued;
-    public read = false;
-    public msgID = "";
-
-}
-
-export class TextMessage {
-
-}
-
-export class ImageMessage {
-
-}
-
-export class ChatButtonGroup {
-
-    constructor({chat, selected = false}: {chat: Chat, selected: boolean}) {
-        this.chat = chat;
-        this.selected = selected;
-    }
-
-    public chat: Chat;
-    public selected = false;
 }

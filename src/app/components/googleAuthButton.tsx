@@ -1,4 +1,3 @@
-import { signIn } from "@/auth";
 import Image from "next/image";
 import { GoogleLogin as gl2 } from "./util/serverFunctions";
 

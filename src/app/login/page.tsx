@@ -1,6 +1,5 @@
 'use client'
 import { Assistant } from "next/font/google";
-import Link from "next/link";
 import { useState } from "react";
 import Copyright from "../components/copyright";
 import GoogleAuthButton from "../components/googleAuthButton";

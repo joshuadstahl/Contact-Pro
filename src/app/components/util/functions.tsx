@@ -1,4 +1,4 @@
-import { userStatus } from "./classes";
+import { userStatus } from "@/app/classes/user";
 
 //returns the color class name for a userStatus
 export function GetColorBgClass(status: userStatus) : string {

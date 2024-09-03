@@ -1,8 +1,7 @@
-import { User, userStatus } from "@/app/components/util/classes";
+import { User, userStatus } from "@/app/classes/user";
 import { auth } from "@/auth";
 import {Collection, Db, MongoClient } from "mongodb";
 import { NextResponse } from "next/server";
-import { json } from "stream/consumers";
 
 export const PUT = auth(async function PUT(req) {
     
@@ -29,15 +28,19 @@ export const PUT = auth(async function PUT(req) {
                 let lookup = await userCollection.findOne<User>({username: body.username});
                 if (lookup === null) {
                     await userCollection.updateOne({username: user.username}, {$set: {username: body.username}});
+                    client.close();
                     return NextResponse.json({ message: "Success"}, {status: 200});
                 }
                 else {
+                    client.close();
                     return NextResponse.json({ message: "Username taken"}, {status: 403});
                 }
             }
+            client.close();
             return NextResponse.json({ message: "Success"}, {status: 200});
         }
         else {
+            client.close();
             return NextResponse.json({ message: "No username in body" }, { status: 403 })
         }
 

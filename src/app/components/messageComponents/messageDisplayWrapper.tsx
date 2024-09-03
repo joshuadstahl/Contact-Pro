@@ -1,7 +1,7 @@
 import MessageDaySeperator from "./messageDaySeperator";
-import MsgStatus from "./msgStatus";
 import Message from "./message";
-import { Chat, Message as MessageC, msgDisplayType, User } from "../util/classes";
+import { Chat } from "@/app/classes/chats";
+import { Message as MessageC, msgDisplayType } from "@/app/classes/messages";
 import { GetFancyDate } from "../util/functions";
 import NewMessageSeperator from "./newMessageSeperator";
 import { useEffect } from "react";
@@ -58,7 +58,7 @@ export default function MessageDisplayWrapper({chat, unreadMessagesStartID} : {c
                         lastSender = x.sender.username;
                     }
                     return (
-                        <div key={x.timestamp.getMilliseconds() + x.msgID}>
+                        <div key={x.timestamp.getMilliseconds()}>
                             <MessageDaySeperator day={GetFancyDate(x.timestamp)}/>
                             {printNewMessageSep && <NewMessageSeperator/>}
                             <Message key={x.msgID + chat.chatID} theMessage={x} type={msgDisplayType.NEW}/>
