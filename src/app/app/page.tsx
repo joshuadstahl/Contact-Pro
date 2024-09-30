@@ -72,8 +72,8 @@ export default function App() {
             members: Array<User>,
             otherUser: User
         }) => {
-            //remap the messages to message objects. 
-            let theMessages : Array<Message> = chat.messages.map((msg) => {
+            //remap the messages to message objects. (and send delivered notifications if necessary)
+            let theMessages : Array<Message> = chat.messages.map((msg) => {               
                 return new Message({...msg, _id:msg.msgID.toString()});
             })
 
@@ -101,6 +101,28 @@ export default function App() {
         setLoadedCount(loadedCount + 1);
     }
 
+    //handle the chats again after the websocket has been connected to 
+    //send delivered notifications to the websocket server.
+    //Wait for the websocket to be open and a listener registered.
+    if (loadedCount == 3 && websocket.readyState == WebSocket.OPEN && webSocketListener) {
+        let copy = {...chatGroups};
+        Object.keys(copy).forEach(key => {
+            let group = copy[key];
+            
+            group.messages.forEach((msg) => {
+                if (msg.received == false) {
+                    msg.received = true;
+                    sendWSMessage({msgType: "messageUpdate", data: {_id: msg.msgID, received: true}});
+                }
+            })
+            
+        });
+
+        setLoadedCount(4);
+        setChatGroups(copy);
+        
+    }
+
     //handle the websocket connection
     useEffect(() => {
         let timeout = 100;
@@ -111,7 +133,7 @@ export default function App() {
                 let conn = new WebSocket(res.addr + res.hash);
                 conn.addEventListener("close", () => {
                     setTimeout(() => {
-                        WebSocketConnect();
+                        WebSocketConnect(); //try to reconnect
                         timeout *= 2; //increase the timeout each time
                         console.log(timeout);
                     }, timeout)
@@ -129,11 +151,15 @@ export default function App() {
                 conn.addEventListener("open",  () => {
                     console.log("Connection open!");
                     timeout = 100; //reset the reconnect timeout
-                    setWebsocket(conn); //set websocket
                 })
                 conn.addEventListener("message", async (event) => {
                     let msg =  await JSON.parse(event.data);
+
                     if (msg.message == "initialized") {
+                        //set websocket now that the websocket server says it is initialized (this is important because the 
+                        //websocket server will ignore everything until it is finished processing the authentication)
+                        setWebsocket(conn);
+
                         //subscribe to updates from the users this user knows
                         Object.keys(userRepo).forEach((key) => {
                             if (key != currUser) {
@@ -166,7 +192,7 @@ export default function App() {
              }
              catch (err) {
                 setTimeout(() => {
-                    WebSocketConnect();
+                    WebSocketConnect(); //try to reconnect
                 }, 50000) //wait five seconds, then reconnect
 
                 //if there is a current websocket [event] listener
@@ -180,16 +206,16 @@ export default function App() {
              }
         }
 
-        //we want the websocket to be the last thing initialized, hence the loadedCount == 2
+        //we want the websocket to be the second thing initialized, hence the loadedCount >= 1
         if (loaded == false && loadedCount == 2 && Object.keys(websocket ?? {}).length == 0) {
             WebSocketConnect();
-            setLoadedCount(loadedCount + 1);
+            setLoadedCount(3);
         }
         
     }, [loaded, loadedCount, setLoadedCount, websocket, setWebsocket, selectedChatID, 
         userRepo, currUser, WSIncomingMessageHandler, setWebSocketListener])
     
-    if (loadedCount == 3 && loaded == false) {
+    if (loadedCount == 4 && loaded == false) {
         setLoaded(true);
     }
     
