@@ -1,4 +1,4 @@
-import useDelayedClassToggler from "../hooks/useDelayedClassToggler";
+import useDelayedClassToggler from "../../hooks/useDelayedClassToggler";
 
 export default function FullScreenModal({children, shown, backdrop = true, delayShow = 200, delayHide = 500}: Readonly<{children: React.ReactNode, shown: boolean, backdrop?:boolean, delayShow?:number, delayHide?:number}>) {
 

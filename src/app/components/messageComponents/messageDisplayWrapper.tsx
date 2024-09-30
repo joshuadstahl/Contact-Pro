@@ -58,7 +58,7 @@ export default function MessageDisplayWrapper({chat, unreadMessagesStartID} : {c
                         lastSender = x.sender.username;
                     }
                     return (
-                        <div key={x.timestamp.getMilliseconds()}>
+                        <div key={x.timestamp.getMilliseconds() + x.msgID}>
                             <MessageDaySeperator day={GetFancyDate(x.timestamp)}/>
                             {printNewMessageSep && <NewMessageSeperator/>}
                             <Message key={x.msgID + chat.chatID} theMessage={x} type={msgDisplayType.NEW}/>

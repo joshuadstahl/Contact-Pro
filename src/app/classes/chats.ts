@@ -50,8 +50,13 @@ export abstract class Chat {
         }
     }
 
-    public setAllMessagesRead() {
+    public setAllMessagesRead(wsSend: Function, currUserID: string) {
         this.messages.forEach(msg => {
+            //if the message hasn't been read and the sender of the message isn't
+            //the current user, send em' updates out!
+            if (msg.read == false && msg.sender._id != currUserID) {
+                wsSend({msgType: "messageUpdate", data: {_id: msg.msgID, read: true}});
+            }
             msg.read = true;
         });
         this.unreadMessages = 0;

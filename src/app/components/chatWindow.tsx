@@ -1,20 +1,27 @@
 'use client'
-import React, { EventHandler, FormEvent, FormEventHandler, useContext, useEffect, useState } from 'react';
-import { Chat, GroupChat, UserChat } from '../classes/chats';
+import React, {KeyboardEvent, MouseEvent, useContext, useEffect} from 'react';
+import { BlankChat, Chat, GroupChat, UserChat } from '../classes/chats';
 import { ChatButtonGroup } from '../classes/chatButtonGroup';
-import { Message as MessageClass, msgDisplayType, msgType } from '../classes/messages';
-import { User, userStatus } from '../classes/user';
+import { Message as MessageClass, msgType } from '../classes/messages';
 import ProfilePhoto from './profilePhoto';
 import Image from 'next/image';
 import MessageDisplayWrapper from './messageComponents/messageDisplayWrapper';
 import { GetColorBgClass, GetStatusName } from './util/functions';
-import { userRepository } from '../app/page';
+import { chatRepository, userRepository } from '../app/page';
 import { CurrentUserContext } from './context/currentUserContext';
 
 
-function ChatWindow({chat, oldestUnreadMessageID, userRepo, sendWSMessage, addNewMessage, chatGroups, setChatGroups} : {chat: Chat | UserChat | GroupChat, oldestUnreadMessageID: string, userRepo: userRepository, sendWSMessage:Function, addNewMessage: Function, chatGroups: Array<ChatButtonGroup>, setChatGroups: Function}) {
+function ChatWindow({chatID, userRepo, sendWSMessage, addNewMessage, chatGroups, setChatGroups, oldestUnreadMessageID, setOldestUnreadMessageID} : {chatID: string, userRepo: userRepository, sendWSMessage:Function, addNewMessage: Function, chatGroups: chatRepository, setChatGroups: Function, oldestUnreadMessageID: string, setOldestUnreadMessageID: Function}) {
     
     const currUser = useContext(CurrentUserContext);
+    let chat = chatGroups[chatID] ?? new BlankChat();
+    if (chat.constructor == UserChat) {
+        chat = chat as UserChat;
+        
+    }
+    else if (chat.constructor == GroupChat) {
+        chat = chat as GroupChat;
+    }
 
     //get the color of the status bubble
     let statusColor = GetColorBgClass(chat.constructor == UserChat ? userRepo[chat.otherUser._id].status : chat.chatStatus);
@@ -37,25 +44,39 @@ function ChatWindow({chat, oldestUnreadMessageID, userRepo, sendWSMessage, addNe
     function sendMessage() {
         let messageField = document.getElementById("messageField");
         let message = messageField?.textContent ?? "blank message";
-        let out = {
-            msgType: "message",
-            data: {
-                _id: (Math.random() * 5000).toString(),
-                chatID: chat.chatID, 
-                message: message,
-                messageData: "", 
-                messageType: msgType.TEXT
+        if (message != "") {
+            let out = {
+                msgType: "message",
+                data: {
+                    _id: Math.round(Math.random() * 5000).toString(),
+                    chatID: chat.chatID, 
+                    message: message,
+                    messageData: "", 
+                    messageType: msgType.TEXT
+                }
             }
+            if(messageField !== undefined && messageField?.textContent !== undefined){
+                messageField.textContent = "";
+            }
+            let data = out.data;
+            sendWSMessage(out);
+            addNewMessage(new MessageClass({...data, sender: userRepo[currUser], timestamp: new Date(), read: true, received:true, status:0}), chat.chatID);
         }
-        if(messageField !== undefined && messageField?.textContent !== undefined){
-            messageField.textContent = "";
-        }
-        let data = out.data;
-        addNewMessage(new MessageClass({...data, sender: userRepo[currUser], timestamp: new Date(), read: true, status:0}), chat.chatID);
-        sendWSMessage(out);
     }
 
+    function textFieldKeyDown(evt: KeyboardEvent) {
+        if (evt.key == "Enter" && evt.shiftKey == false) {
+            evt.preventDefault();
+            sendMessage();
+        }
+    }
     
+    function anythingKeyDown(evt: KeyboardEvent) {
+        console.log(evt);
+        // if (evt.key == "Esc") {
+
+        // }
+    }
 
     return (
         (type == "full" && 
@@ -85,7 +106,7 @@ function ChatWindow({chat, oldestUnreadMessageID, userRepo, sendWSMessage, addNe
                             </div>
                             {
                                 //@ts-ignore
-                                <div id="messageField" contentEditable={true} placeholder={"Type a message"}
+                                <div id="messageField" onKeyDown={textFieldKeyDown} contentEditable={true} placeholder={"Type a message"}
                                     className='outline-none text-wrap break-all whitespace-pre-wrap overflow-hidden grow'>
                                 </div>
                             }

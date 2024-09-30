@@ -30,7 +30,7 @@ export const GET = auth(async function GET(req) {
 
         const wsAuthCollection: Collection = db.collection("ws_auth");
 
-        let currAuth = await wsAuthCollection.findOne<wsLogin>({_id: new ObjectId(user._id)});
+        let currAuth = await wsAuthCollection.findOne<wsLogin>({userID: user._id});
 
         let newAuth : wsLogin;
         if (currAuth !== null) {

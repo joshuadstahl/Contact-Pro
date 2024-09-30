@@ -2,6 +2,8 @@ import { WebSocketServer, WebSocket } from 'ws';
 import { MongoClient, Db, Collection, ObjectId } from 'mongodb';
 const dotenv = require('dotenv').config({ path: '.env.local' })
 import { createHash, randomUUID } from 'crypto';
+import {msgStatusEnum} from "../app/classes/messages";
+import {ServerMessage, iRecipientStatuses} from "../app/classes/serverMessage";
 
 
 const wss = new WebSocketServer({
@@ -64,15 +66,7 @@ interface dbRawMessage {
 	messageData: string;
 	messageType: number;
 	timestamp: Date;
-	recipientStatuses?: {
-		[username: string]: {
-			"0queued": string | null;
-			"1sending": string | null;
-			"2sent": string | null;
-			"3delivered": string | null;
-			"4read": string | null;
-		}
-	}
+	recipientStatuses: iRecipientStatuses;
 }
 
 class outgoingNewMessage {
@@ -215,13 +209,59 @@ class incomingNewMessage {
 	}
 }
 
+function getMostRecentStatus(msg: dbRawMessage) {
+	if (Object.keys(msg.recipientStatuses).length == 1) {
+		let lastValidStatus = 0;
+		let userID = Object.keys(msg.recipientStatuses)[0]; //get the userID
+		let userData = msg.recipientStatuses[userID]; //the data for the userID
+		let userKeys2 = Object.keys(msg.recipientStatuses[userID]).sort(); //the keys for the statuses under the userID
+		
+		type objectKey = keyof typeof userData; //the datatype for the keys under the userID
+
+		//loop through each of the possible keys(status items) in the array
+		for (let i = 0; i < userKeys2.length; i++) {
+			//if the current key in the values d
+			if (userData[userKeys2[i] as objectKey] !== null) lastValidStatus = i;
+			else break;
+		}
+		return (lastValidStatus as msgStatusEnum);
+	}
+	else {
+		let unameList = Object.keys(msg.recipientStatuses); //get a list of recipient userIDs
+		let maxStatus = new Array<Number>; //array of the max status (most recent status) for each of the userIDs
+
+		unameList.forEach(userID => {
+			let lastValidStatus = 0;
+			let userData = msg.recipientStatuses[userID]; //the data for the userID
+			let userKeys2 = Object.keys(msg.recipientStatuses[userID]).sort(); //the keys for the statuses under the userID
+			
+			type objectKey = keyof typeof userData; //the datatype for the keys under the userID
+
+			//loop through each of the possible keys(status items) in the array
+			for (let i = 0; i < userKeys2.length; i++) {
+				//if the current key in the values d
+				if (userData[userKeys2[i] as objectKey] !== null) lastValidStatus = i;
+				else break;
+			}
+			maxStatus.push(lastValidStatus);
+		});
+
+		maxStatus = maxStatus.sort();
+
+		return (maxStatus[maxStatus.length - 1] as msgStatusEnum);  
+	}
+	
+}
+
 
 let clients: { [username:string]: Array<WebSocket> } = {};
 let userSubs: { [username:string]: Array<string> } = {};
 
 wss.on('connection', async function connection(ws: WebSocket, request) {
 
-	let userkey = request.url?.substring(1);
+	let lastSlash = request.url?.lastIndexOf("/") ?? 0;
+	let userkey = request.url?.substring(lastSlash + 1);
+
 	const client: MongoClient = new MongoClient(process.env.DB_CONN_STRING ?? "");
 	await client.connect();
 	const db: Db = client.db(process.env.DB_NAME ?? "");
@@ -231,7 +271,7 @@ wss.on('connection', async function connection(ws: WebSocket, request) {
 
 	let auth = await wsAuthCollection.findOne({hash: userkey});
 	
-	let currUserID = ""; //the current username for the client signed in.
+	let currUserID = ""; //the current user ID for the client signed in.
 
 	//auth = auth as wsLogin;
 	if (auth !== null) {
@@ -296,6 +336,15 @@ wss.on('connection', async function connection(ws: WebSocket, request) {
 		}
 	}
 
+	function sendMessageToUserIfConnected(userID: string, msg: string) {
+		if (userID in clients) {
+			console.log("sending!");
+			clients[userID].forEach((ws) => {
+				ws.send(msg.toString());
+			})
+		}
+	}
+
 	async function statusUpdate(status: number, both=false) {
 		let out = {
 			msgType: "userUpdate",
@@ -332,6 +381,8 @@ wss.on('connection', async function connection(ws: WebSocket, request) {
 				handleClose("Unknown error occurred", 1011);
 				return;
 			}
+
+			console.log(msg);
 	
 			//if the user is logged in
 			if (currUserID != "") {
@@ -374,9 +425,10 @@ wss.on('connection', async function connection(ws: WebSocket, request) {
 									let newID = await newM.submit(db);
 									if (newID !== false) {
 										ws.send(JSON.stringify({"msgType":"messageCreated", data: {newid: newID, oldid: newM._id}}));
+										ws.send(JSON.stringify({"msgType":"messageUpdate", data: {_id: newID, status:2}})); //communicate that the message has been received (status changed)
 									}
 									else {
-										ws.send(JSON.stringify({"msgType":"messageCreationFailed", data: {id: newM._id}}));
+										ws.send(JSON.stringify({"msgType":"messageCreationFailed", data: {_id: newM._id}}));
 									}
 
 									newM.chat?.members.forEach(client => {
@@ -395,16 +447,18 @@ wss.on('connection', async function connection(ws: WebSocket, request) {
 														sender: newM.sender,
 														timestamp: newM.timestamp,
 														read: false,
+														received: false,
 														status: 0
 													}
 												}
 
 												//if the client is the same as the current user ID,
-												//make sure you send special information (e.g read=true)
+												//make sure you send different information (e.g read=true)
 												if (client == currUserID) {
 													//if the client WS is not the same as the current websocket
 													if (clientWS != ws) {
 														out.data.read = true;
+														out.data.received = true;
 														out.data.status = 0;
 														clientWS.send(JSON.stringify(out));
 													}
@@ -422,15 +476,72 @@ wss.on('connection', async function connection(ws: WebSocket, request) {
 
 								}
 								else {
-									ws.send(JSON.stringify({"msgType":"messageCreationFailed", data: {id: newM._id}}));
+									ws.send(JSON.stringify({"msgType":"messageCreationFailed", data: {_id: newM._id}}));
 								}
 							} 
 							catch (err) {
-								ws.send(JSON.stringify({"msgType":"messageCreationFailed", data: {id: _id}}));
+								ws.send(JSON.stringify({"msgType":"messageCreationFailed", data: {_id: _id}}));
 							}
 						}
 						break;
 					case "messageUpdate":
+						if (msg.data != undefined && msg.data._id != undefined) {
+							console.log("not null 1");
+							try {
+								let updates = false;
+
+								let msgID : string = msg.data._id.toString();
+								console.log(msgID);
+								const msgCollection = db.collection<dbRawMessage>("messages_raw");
+								let msgdata = await msgCollection.findOne({_id: new ObjectId(msgID)});
+
+								if (msgdata != null) {
+									console.log("not null 2");
+									if (msg.data.received != undefined) {
+										if (msg.data.received == true) {
+											if (msgdata.recipientStatuses != undefined && currUserID in msgdata.recipientStatuses) {
+												//if the message for the current user is not delivered, set it to delivered.
+												if (msgdata.recipientStatuses[currUserID]['3delivered'] == null) {
+													msgdata.recipientStatuses[currUserID]['3delivered'] = new Date().toString();
+													updates = true;
+												}
+											}
+										}
+									}
+									
+									if (msg.data.read != undefined) {
+										if (msg.data.read == true) {
+											if (msgdata.recipientStatuses != undefined && currUserID in msgdata.recipientStatuses) {
+												//if the message for the current user is not read, set it to read.
+												if (msgdata.recipientStatuses[currUserID]['4read'] == null) {
+													//if for some reason it is not shown as delivered, set it to be delivered.
+													if (msgdata.recipientStatuses[currUserID]['3delivered'] == null) {
+														msgdata.recipientStatuses[currUserID]['3delivered'] = new Date().toString();
+													}
+													msgdata.recipientStatuses[currUserID]['4read'] = new Date().toString(); //set the message for the user to be read.
+													
+													updates = true;
+												}
+											}
+										}
+									}
+	
+									if (updates) {
+										console.log("updates to raw message!");
+										await msgCollection.updateOne({_id: new ObjectId(msgID)}, {$set: {recipientStatuses: msgdata.recipientStatuses}});
+										sendMessageToUserIfConnected(msgdata.sender.toString(), JSON.stringify({msgType: "messageUpdate", data: {_id: msgID, status:getMostRecentStatus(msgdata)}}));
+									}	
+								}
+												
+							}
+							catch (err) {
+								console.log(err);
+								console.log("failed to update message status");
+							}
+
+							console.log("messageUpdate");
+
+						}
 						break;
 					case "userUpdateSubscribe":
 						let subID = msg.data.userSubID;

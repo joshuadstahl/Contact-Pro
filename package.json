@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "ws-server": "node ./src/server/dist/server.js"
+    "ws-server": "node ./src/server/dist/server/server.js"
   },
   "dependencies": {
     "@types/ws": "^8.5.12",

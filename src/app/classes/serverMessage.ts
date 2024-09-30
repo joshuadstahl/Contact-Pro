@@ -41,10 +41,10 @@ export class ServerMessage {
     public export(currUserID: string) {
         
         if (currUserID == this.sender._id) {
-            return new Message({...this, status:this.getMostRecentStatus(), sender:this.sender.export(currUserID), read:true});
+            return new Message({...this, status:this.getMostRecentStatus(), sender:this.sender.export(currUserID), read:true, received: true});
         }
         else {
-            return new Message({...this, status:this.getMostRecentStatus(), sender:this.sender.export(currUserID), read:(currUserID in this.recipientStatuses ? this.recipientStatuses[currUserID]['4read'] !== null && this.recipientStatuses[currUserID]['4read'] !== undefined : false)});
+            return new Message({...this, status:this.getMostRecentStatus(), sender:this.sender.export(currUserID), read:(currUserID in this.recipientStatuses ? this.recipientStatuses[currUserID]['4read'] !== null && this.recipientStatuses[currUserID]['4read'] !== undefined : false), received:(currUserID in this.recipientStatuses ? this.recipientStatuses[currUserID]['3delivered'] !== null && this.recipientStatuses[currUserID]['3delivered'] !== undefined : false)});
         }
         
     }

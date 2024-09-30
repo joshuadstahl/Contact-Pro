@@ -4,8 +4,10 @@ import ChatButton from './chatButton';
 import { ChatButtonGroup } from '../classes/chatButtonGroup';
 import Button from "./button";
 import Copyright from './copyright';
+import { chatRepository } from '../app/page';
+import { Chat } from '../classes/chats';
 
-function Sidebar({chats, selectedChatToggler} : {chats: ChatButtonGroup[], selectedChatToggler:Function}) {
+function Sidebar({chats, selectedChatID, selectedChatToggler} : {chats: chatRepository, selectedChatID: string, selectedChatToggler:Function}) {
   
     const [selectedButton, setSelectedButton] = useState([true, false]);
 
@@ -16,14 +18,28 @@ function Sidebar({chats, selectedChatToggler} : {chats: ChatButtonGroup[], selec
         setSelectedButton(temp);
     }
 
-    let sorted = chats.sort((a, b) => {
-        if ((a.chat.lastMessageTime ?? 0) > (b.chat.lastMessageTime ?? 0)) {
+    //get out all elements in object and put them into an array.
+    let toSortArray = new Array<[string: String, chat: Chat]>;
+    for (var i in chats) {
+        toSortArray.push([i, chats[i]])
+    }
+
+    //sort said array
+    let doneSortedArray = toSortArray.sort((a, b) => {
+        if ((a[1].lastMessageTime ?? 0) > (b[1].lastMessageTime ?? 0)) {
             return -1;
         }
-        else if ((a.chat.lastMessageTime ?? 0) < (b.chat.lastMessageTime ?? 0)) {
+        else if ((a[1].lastMessageTime ?? 0) < (b[1].lastMessageTime ?? 0)) {
             return 1;
         }
-        return a.chat.name.localeCompare(b.chat.name);
+        return a[1].name.localeCompare(b[1].name);
+    })
+    
+    //put sorted array back into an object
+    let sorted : chatRepository = {};
+    doneSortedArray.forEach((item) => {
+        let chat = item[1];
+        sorted[chat.chatID] = item[1];
     })
 
     return (
@@ -54,8 +70,8 @@ function Sidebar({chats, selectedChatToggler} : {chats: ChatButtonGroup[], selec
                 {/* This is the code for the Chats Tab */}
                 <div className={"grid grid-col-1 gap-1 overflow-auto custom_scrollbars " + (selectedButton[0] ? "block" : "hidden")}>  
                     {
-                        sorted.map((grp) => {
-                            return <ChatButton key={grp.chat.chatID} chat={grp.chat} selected={grp.selected} setSelected={selectedChatToggler}/>
+                        Object.values(sorted).map((chat) => {
+                            return <ChatButton key={chat.chatID} chats={chats} chatID={chat.chatID} selected={chat.chatID == selectedChatID} setSelected={selectedChatToggler}/>
                         })
                     }
                 </div>

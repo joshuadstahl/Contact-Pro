@@ -5,12 +5,15 @@ import { GetFancyDate, GetFancyTime } from './util/functions';
 import { useContext } from 'react';
 import { CurrentUserContext } from './context/currentUserContext';
 import { UserRepositoryContext } from './context/userRepositoryContext';
+import { chatRepository } from '../app/page';
 
-export default function ChatButton({chat, selected, setSelected}: {chat: Chat, selected: boolean, setSelected: Function}) {
+export default function ChatButton({chats, chatID, selected, setSelected}: {chats: chatRepository, chatID: string, selected: boolean, setSelected: Function}) {
 
     //get the current application user from the context API
     const currUser = useContext(CurrentUserContext);
     const userRepo = useContext(UserRepositoryContext);
+
+    let chat = chats[chatID];
 
     //set the last message text to "Send a new message to {chat's name}"
     //if the last message is not existant. Also set this message to be
