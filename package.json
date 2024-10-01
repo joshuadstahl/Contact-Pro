@@ -19,6 +19,7 @@
     "random-word-slugs": "^0.1.7",
     "react": "^18",
     "react-dom": "^18",
+    "sharp": "^0.33.5",
     "swr": "^2.2.5",
     "ws": "^8.18.0"
   },
