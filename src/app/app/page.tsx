@@ -8,7 +8,7 @@ import { ChatButtonGroup } from "../classes/chatButtonGroup";
 import { Message } from "../classes/messages";
 import { userStatus, User } from "../classes/user";
 import { msgStatusEnum } from "../classes/messages";
-import { useState, ChangeEvent, useEffect, useRef } from "react";
+import { useState, ChangeEvent, useEffect, useRef, useCallback } from "react";
 import { CurrentUserContext } from "../components/context/currentUserContext";
 import { UserRepositoryContext } from "../components/context/userRepositoryContext";
 import { ChatGroupsContext } from "../components/context/chatGroupsContext";
@@ -51,6 +51,168 @@ export default function App() {
     const refWebSocketListener = useRef(false); //use Ref hook so the code handling the WS connection can keep notified of the websocket event handler status.
 
     const chats = useSWR('/api/chats', fetcher); //get the chats
+
+    /*************************  FUNCTIONS  **************************/
+    const sendWSMessage = useCallback(function sendWSMessage(message: object|string) {
+        if (websocket.readyState == WebSocket.OPEN) {
+            websocket.send(JSON.stringify(message));
+            console.log("sent!");
+        }
+        else {
+            console.log("no sent");
+        }
+    }, [websocket]);
+
+    const selectedChatToggler = useCallback(function selectedChatToggler(id:string) {
+        if (id in chatGroups) {
+            let temp = chatGroups[id].messages.find((x) => x.read == false);
+            setOldestUnreadMessageID(temp !== undefined ? temp.msgID : "");
+            setSelectedChatID(id);
+            refSelectedChatID.current = id; //update the useRef version of the selected Chat ID.
+            let copy = {...chatGroups};
+            copy[id].setAllMessagesRead(sendWSMessage, currUser);
+            setChatGroups({...copy});
+        }
+    }, [chatGroups, setChatGroups, setSelectedChatID, sendWSMessage, setOldestUnreadMessageID, refSelectedChatID, currUser])
+
+    const addNewMessage = useCallback(function addNewMessage(msg: Message, chatID: string) {
+        let copy = {...chatGroups};
+        Object.values(copy).forEach((grp) => {
+            if (grp.chatID == chatID) {
+                grp.newMessage({msg});
+                if (refSelectedChatID.current == chatID) {
+                    //if the window has focus, then set all the messages to be read.
+                    if (document.hasFocus()) {
+                        console.log("All messages read!");
+                        grp.setAllMessagesRead(sendWSMessage, currUser);
+                    }
+                    else {
+                        //set an one-time event listener to trigger
+                        //the messages being read on focus, only
+                        //if the event listener hasn't already been set up
+                        if (grp.unreadMessages == 1) {
+                            window.addEventListener("focus", () => {
+                                selectedChatToggler(chatID);
+                            }, {once: true});
+                        }
+                        //if the new message is from a different user,
+                        //turn on the new message flag        
+                        if (msg.sender._id != currUser) {
+                            let temp = grp.messages.find((x) => x.read == false);
+                            setOldestUnreadMessageID(temp !== undefined ? temp.msgID : "");
+                        }
+                        
+                    }
+    
+                    //if the sender of the most recent message is the signed-in user, then
+                    //really all the messages should be read and there should be no "new message" 
+                    //flag.
+                    if (msg.sender._id == currUser) {
+                        setOldestUnreadMessageID("");
+                    }
+                              
+                }
+            }
+        })
+        setChatGroups(copy);
+    }, [chatGroups, selectedChatToggler, setOldestUnreadMessageID, setChatGroups, currUser, sendWSMessage])
+
+    const changeStatus = useCallback(function changeStatus(userID: string, status: userStatus|Number) {
+        let copy = {...userRepo};
+        if (userID in copy) {
+            copy[userID].status = (status as userStatus);
+            setUserRepo(copy);
+        }
+    }, [userRepo, setUserRepo])
+    
+    const WSIncomingMessageHandler = useCallback(
+        function WSIncomingMessageHandler(event: MessageEvent) {
+          let body;
+          try {
+              body = JSON.parse(event.data);
+          }
+          catch(err) {
+              return;
+          }
+      
+          if (body.msgType == "userUpdate") {
+              if (body.data !== undefined && body.data.updateType !== undefined) {
+                  if (body.data.updateType == "status") {
+                      changeStatus(body.data.userID ?? "", body.data.status ?? 0);
+                  }
+              }
+          }
+          else if (body.msgType == "message") {
+              if (body.data !== undefined) {
+                  let data = body.data;
+                  if (data._id !== undefined && data.message !== undefined && data.sender !== undefined && 
+                      data.timestamp !== undefined && data.read !== undefined && data.chatID !== undefined) {
+      
+                      let read = data.read;
+                      if (selectedChatID == data.chatID && document.hasFocus()) {
+                          read = true;
+                      }
+                      
+                      addNewMessage(new Message({message: data.message, _id: data._id, sender: userRepo[data.sender], timestamp: new Date(data.timestamp), status: data.status, read:read, received: true}), data.chatID);
+                      sendWSMessage({msgType: "messageUpdate", data: {_id: data._id, received: true, read: read}});
+                  }
+              }
+          }
+          else if (body.msgType == "messageUpdate") {
+              if (body.data !== undefined && body.data._id !== undefined && body.data.status !== undefined) {
+                  let copy = {...chatGroups};
+                  for (let i = 0; i < Object.values(copy).length; i++) {
+                      let grp = Object.values(copy)[i];
+                      let doBreak = false;
+                      for (let j = 0; j < grp.messages.length; j++) {
+                          if (grp.messages[j].msgID == body.data._id) {
+                              grp.messages[j].status = body.data.status;
+                              doBreak = true;
+                              break;
+                          }
+                      }
+                      if (doBreak) break;
+                  }
+                  setChatGroups(copy); //update the chat groups
+              }
+          }
+          else if (body.msgType == "messageCreated") {
+      
+              //the idea is to update the created message to have the new id from the server.
+              if (body.data !== undefined && body.data.oldid !== undefined && body.data.newid !== undefined) {
+                  let copy = {...chatGroups};
+                  Object.values(copy).forEach((grp) => {
+                      grp.messages.forEach(msg => {
+                          if (msg.msgID == body.data.oldid) {
+                              msg.msgID = body.data.newid ?? "";
+                          }
+                      });
+                  })
+                  setChatGroups(copy); //update the chat groups
+              }
+              
+          }
+          else if (body.msgType == "messageCreationFailed") {
+              if (body.data !== undefined) {
+                  if (body.data.id != undefined) {
+                      let copy = {...chatGroups};
+                      Object.values(copy).forEach((grp) => {
+                          grp.messages.forEach(msg => {
+                              if (msg.msgID == body.data.id) {
+                                  
+                              }
+                          });
+                      })
+                      setChatGroups(copy); //update the chat groups
+                  }
+              }
+          }
+      
+          
+    }, [changeStatus, addNewMessage, sendWSMessage, selectedChatID, chatGroups, setChatGroups, userRepo])
+
+
+    /*************************  PAGE LOGIC  **************************/
 
     //handle the current user data
     if (data !== undefined && currUser == "") {
@@ -186,7 +348,7 @@ export default function App() {
                         }))
                     }
                     else {
-                        //WSIncomingMessageHandler(event);
+                        
                     }
                 })
              }
@@ -219,76 +381,22 @@ export default function App() {
         setLoaded(true);
     }
     
-    function keyboardShortcuts(event: KeyboardEvent): any {
-        //if the key is escape and there is a selected chat, then set remove the "new messages" banner.
-        if (event.key == "Escape" && selectedChatID != "") {
-            setOldestUnreadMessageID("");
-        }
-    }
-
     //add keyboard shortcut event listener
     useEffect(() => {
+
+        function keyboardShortcuts(event: KeyboardEvent): any {
+            //if the key is escape and there is a selected chat, then set remove the "new messages" banner.
+            if (event.key == "Escape" && selectedChatID != "") {
+                setOldestUnreadMessageID("");
+            }
+        }
+
         //only set it once, when the page is loaded.
         if (loaded == true) {
             window.addEventListener("keydown", keyboardShortcuts);
         }
         
     }, [loaded, selectedChatID])
-  
-
-  function selectedChatToggler(id:string) {
-    if (id in chatGroups) {
-        let temp = chatGroups[id].messages.find((x) => x.read == false);
-        setOldestUnreadMessageID(temp !== undefined ? temp.msgID : "");
-        setSelectedChatID(id);
-        refSelectedChatID.current = id; //update the useRef version of the selected Chat ID.
-        let copy = {...chatGroups};
-        copy[id].setAllMessagesRead(sendWSMessage, currUser);
-        setChatGroups({...copy});
-    }
-  }
-
-  function addNewMessage(msg: Message, chatID: string) {
-    let copy = {...chatGroups};
-    Object.values(copy).forEach((grp) => {
-        if (grp.chatID == chatID) {
-            grp.newMessage({msg});
-            if (refSelectedChatID.current == chatID) {
-                //if the window has focus, then set all the messages to be read.
-                if (document.hasFocus()) {
-                    console.log("All messages read!");
-                    grp.setAllMessagesRead(sendWSMessage, currUser);
-                }
-                else {
-                    //set an one-time event listener to trigger
-                    //the messages being read on focus, only
-                    //if the event listener hasn't already been set up
-                    if (grp.unreadMessages == 1) {
-                        window.addEventListener("focus", () => {
-                            selectedChatToggler(chatID);
-                        }, {once: true});
-                    }
-                    //if the new message is from a different user,
-                    //turn on the new message flag        
-                    if (msg.sender._id != currUser) {
-                        let temp = grp.messages.find((x) => x.read == false);
-                        setOldestUnreadMessageID(temp !== undefined ? temp.msgID : "");
-                    }
-                    
-                }
-
-                //if the sender of the most recent message is the signed-in user, then
-                //really all the messages should be read and there should be no "new message" 
-                //flag.
-                if (msg.sender._id == currUser) {
-                    setOldestUnreadMessageID("");
-                }
-                          
-            }
-        }
-    })
-    setChatGroups(copy);
-  }
 
   function changeName() {
     let copy = {...userRepo};
@@ -296,110 +404,7 @@ export default function App() {
         (copy["66d3604224b6f40eaafb0b94"] as User).name = "Harry Smith Bungaloo";
         setUserRepo(copy);
     }
-  }
-
-  function changeStatus(userID: string, status: userStatus|Number) {
-    let copy = {...userRepo};
-    if (userID in copy) {
-        copy[userID].status = (status as userStatus);
-        setUserRepo(copy);
-    }
-  }
-
-  function sendWSMessage(message: object|string) {
-    if (websocket.readyState == WebSocket.OPEN) {
-        websocket.send(JSON.stringify(message));
-        console.log("sent!");
-    }
-    else {
-        console.log("no sent");
-    }
-  }
-
-  function WSIncomingMessageHandler(event: MessageEvent) {
-    let body;
-    try {
-        body = JSON.parse(event.data);
-    }
-    catch(err) {
-        return;
-    }
-
-    if (body.msgType == "userUpdate") {
-        if (body.data !== undefined && body.data.updateType !== undefined) {
-            if (body.data.updateType == "status") {
-                changeStatus(body.data.userID ?? "", body.data.status ?? 0);
-            }
-        }
-    }
-    else if (body.msgType == "message") {
-        if (body.data !== undefined) {
-            let data = body.data;
-            if (data._id !== undefined && data.message !== undefined && data.sender !== undefined && 
-                data.timestamp !== undefined && data.read !== undefined && data.chatID !== undefined) {
-
-                let read = data.read;
-                if (selectedChatID == data.chatID && document.hasFocus()) {
-                    read = true;
-                }
-                
-                addNewMessage(new Message({message: data.message, _id: data._id, sender: userRepo[data.sender], timestamp: new Date(data.timestamp), status: data.status, read:read, received: true}), data.chatID);
-                sendWSMessage({msgType: "messageUpdate", data: {_id: data._id, received: true, read: read}});
-            }
-        }
-    }
-    else if (body.msgType == "messageUpdate") {
-        if (body.data !== undefined && body.data._id !== undefined && body.data.status !== undefined) {
-            let copy = {...chatGroups};
-            for (let i = 0; i < Object.values(copy).length; i++) {
-                let grp = Object.values(copy)[i];
-                let doBreak = false;
-                for (let j = 0; j < grp.messages.length; j++) {
-                    if (grp.messages[j].msgID == body.data._id) {
-                        grp.messages[j].status = body.data.status;
-                        doBreak = true;
-                        break;
-                    }
-                }
-                if (doBreak) break;
-            }
-            setChatGroups(copy); //update the chat groups
-        }
-    }
-    else if (body.msgType == "messageCreated") {
-
-        //the idea is to update the created message to have the new id from the server.
-        if (body.data !== undefined && body.data.oldid !== undefined && body.data.newid !== undefined) {
-            let copy = {...chatGroups};
-            Object.values(copy).forEach((grp) => {
-                grp.messages.forEach(msg => {
-                    if (msg.msgID == body.data.oldid) {
-                        msg.msgID = body.data.newid ?? "";
-                    }
-                });
-            })
-            setChatGroups(copy); //update the chat groups
-        }
-        
-    }
-    else if (body.msgType == "messageCreationFailed") {
-        if (body.data !== undefined) {
-            if (body.data.id != undefined) {
-                let copy = {...chatGroups};
-                Object.values(copy).forEach((grp) => {
-                    grp.messages.forEach(msg => {
-                        if (msg.msgID == body.data.id) {
-                            
-                        }
-                    });
-                })
-                setChatGroups(copy); //update the chat groups
-            }
-        }
-    }
-
-    
-  }
+  }  
 
   if (websocket.readyState == WebSocket.OPEN && websocket !== null && webSocketListener == false) {
     console.log("wsOpen!");
