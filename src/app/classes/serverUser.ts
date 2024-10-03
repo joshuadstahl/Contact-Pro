@@ -24,13 +24,16 @@ export class ServerUser {
     public export(currUserID: string) {
 
         let exportStatus;
-        if (currUserID == this._id){
+        let email;
+        if (currUserID.toString() == this._id.toString()){
             exportStatus = this.savedStatus !== null ? this.savedStatus : this.status;
+            email = this.email;
         }
         else {
             exportStatus = this.status;
+            email = "";
         }
 
-        return new User({...this, status: exportStatus});
+        return new User({...this, status: exportStatus, email: email});
     }
 }

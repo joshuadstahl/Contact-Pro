@@ -38,6 +38,7 @@ export default function App() {
     let userInfo = data ?? blankuser;
 
     const [chatGroups, setChatGroups] = useState<chatRepository>({}); //to keep a list of chats
+    const [chatGroupsLoaded, setChatGroupsLoaded] = useState(false); //to keep track if the chat groups have been loaded or not (especially for the case when there are no chats to be loaded.)
     const [selectedChatID, setSelectedChatID] = useState<string>(""); //to keep track of the id of the open chat
     const [currUser, setCurrUser] = useState<string>(""); //to keep the object of the current user
     const [loaded, setLoaded] = useState(false); //to keep track if everything is loaded or not
@@ -49,6 +50,7 @@ export default function App() {
     const [webSocketListener, setWebSocketListener] = useState(false); //keep track if there is a websocket listener already.
     const refSelectedChatID = useRef(""); //use Ref hook so webhook message event handler can access an updated version of selectedChatID.
     const refWebSocketListener = useRef(false); //use Ref hook so the code handling the WS connection can keep notified of the websocket event handler status.
+    const loggingOut = useRef(false); //keeps track if the code is currently logging out so that the websocket doesn't keep trying to reconnect.
 
     const chats = useSWR('/api/chats', fetcher); //get the chats
 
@@ -219,48 +221,58 @@ export default function App() {
         setCurrUser(data.user._id);
         setOnboardingComplete(!data.newUser);
         setLoadedCount(loadedCount + 1);
+
+        //set the current user info
+        let copy = {...userRepo};
+        copy[data.user._id] = new User(data.user);
+        setUserRepo(copy);
     }
 
     //handle the chats data
-    if (chats.data !== undefined && Object.keys(chatGroups).length == 0) {
-        let cg2 = {...chatGroups};
-        let userRepo: userRepository = {}; //what is going to update the user repository
-        chats.data.chats.forEach((chat: {
-            chatID: string,
-            name: string,
-            chatType: string,
-            photo: string,
-            messages: Array<Message>,
-            members: Array<User>,
-            otherUser: User
-        }) => {
-            //remap the messages to message objects. (and send delivered notifications if necessary)
-            let theMessages : Array<Message> = chat.messages.map((msg) => {               
-                return new Message({...msg, _id:msg.msgID.toString()});
-            })
+    if (chats.data !== undefined && Object.keys(chatGroups).length == 0 && chatGroupsLoaded == false) {
+        if (chats.data.message != "Not authenticated" && chats.data.chats.length !== undefined && chats.data.chats.length != 0) {
+            let cg2 = {...chatGroups};
+            let userRepoCopy: userRepository = {...userRepo}; //what is going to update the user repository
+            chats.data.chats.forEach((chat: {
+                chatID: string,
+                name: string,
+                chatType: string,
+                photo: string,
+                messages: Array<Message>,
+                members: Array<User>,
+                otherUser: User
+            }) => {
+                //remap the messages to message objects. (and send delivered notifications if necessary)
+                let theMessages : Array<Message> = chat.messages.map((msg) => {               
+                    return new Message({...msg, _id:msg.msgID.toString()});
+                })
 
-            //create the chat button groups (really just the chat groups)
-            let newChat: Chat;
-            if (chat.chatType == "user") {
-                newChat = new UserChat({...chat, messages:theMessages});
-            }
-            else { //assume it is a group            
-                newChat = new GroupChat({...chat, messages:theMessages});
-            }
-            cg2[newChat.chatID] = newChat;
-
-            //import the users from the chat into the users database
-            chat.members.map((usr) => {
-                //if the user is not yet in the user repository, add it
-                if (!(usr._id in userRepo)) {
-                    userRepo[usr._id] = new User(usr);
+                //create the chat button groups (really just the chat groups)
+                let newChat: Chat;
+                if (chat.chatType == "user") {
+                    newChat = new UserChat({...chat, messages:theMessages});
                 }
+                else { //assume it is a group            
+                    newChat = new GroupChat({...chat, messages:theMessages});
+                }
+                cg2[newChat.chatID] = newChat;
+
+                //import the users from the chat into the users database
+                chat.members.map((usr) => {
+                    //if the user is not yet in the user repository, add it
+                    if (!(usr._id in userRepoCopy)) {
+                        userRepoCopy[usr._id] = new User(usr);
+                    }
+                });
             });
-        });
-        console.log(cg2);
-        setChatGroups(cg2);
-        setUserRepo(userRepo);
+            console.log(cg2);
+            setChatGroups(cg2);
+            setUserRepo(userRepoCopy);
+        }
+
         setLoadedCount(loadedCount + 1);
+        setChatGroupsLoaded(true);
+        
     }
 
     //handle the chats again after the websocket has been connected to 
@@ -294,11 +306,15 @@ export default function App() {
                 let res = await resp.json();
                 let conn = new WebSocket(res.addr + res.hash);
                 conn.addEventListener("close", () => {
-                    setTimeout(() => {
-                        WebSocketConnect(); //try to reconnect
-                        timeout *= 2; //increase the timeout each time
-                        console.log(timeout);
-                    }, timeout)
+                    //as long as a logout is not in process
+                    if (!loggingOut.current) {
+                        setTimeout(() => {
+                            WebSocketConnect(); //try to reconnect
+                            timeout *= 2; //increase the timeout each time
+                            console.log(timeout);
+                        }, timeout)
+                    }
+                    
                     
                     //if there is a current websocket [event] listener
                     //then set that there isn't one so it can be recreated
@@ -353,9 +369,13 @@ export default function App() {
                 })
              }
              catch (err) {
-                setTimeout(() => {
-                    WebSocketConnect(); //try to reconnect
-                }, 50000) //wait five seconds, then reconnect
+                //as long as a logout is not in process
+                if (!loggingOut.current) {
+                    setTimeout(() => {
+                        WebSocketConnect(); //try to reconnect
+                    }, 50000) //wait five seconds, then reconnect
+                }
+                
 
                 //if there is a current websocket [event] listener
                 //then set that there isn't one so it can be recreated
@@ -427,6 +447,7 @@ export default function App() {
 
     <div>
         {doLogout && <FormSub action={async () => {
+            loggingOut.current = true;
             websocket.close(); //close the websocket on logout (for some reason it doesn't immeditately get closed)
             await Logout()
         }}/>}

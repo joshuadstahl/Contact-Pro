@@ -1,7 +1,7 @@
 import { auth } from "@/auth"
 
 export const config = {
-    matcher: ["/((?!api|_next/static|_next/image|favicon.ico|static|manifest.json|robots.txt).*)"],
+    matcher: ["/((?!api/auth|_next/static|_next/image|favicon.ico|static|manifest.json|robots.txt).*)"],
 }
 
 export default auth((req) => {

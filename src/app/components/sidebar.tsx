@@ -70,17 +70,28 @@ function Sidebar({chats, selectedChatID, selectedChatToggler} : {chats: chatRepo
                 {/* This is the code for the Chats Tab */}
                 <div className={"grid grid-col-1 gap-1 overflow-auto custom_scrollbars " + (selectedButton[0] ? "block" : "hidden")}>  
                     {
+                        Object.values(sorted).length > 0 &&
                         Object.values(sorted).map((chat) => {
                             return <ChatButton key={chat.chatID} chats={chats} chatID={chat.chatID} selected={chat.chatID == selectedChatID} setSelected={selectedChatToggler}/>
-                        })
+                        })                        
                     }
                 </div>
+                {Object.values(sorted).length == 0 && selectedButton[0] &&
+                <div className='flex flex-col grow justify-center'>
+                    <h5 className='text-center text-charcoal font-light leading-6 px-5'>No chats yet. Add one by clicking the [+] button above. Or, ask a friend to add you to theirs.</h5>
+                </div>
+                }
 
                 {/* This is the code for the Friends Tab */}
                 
                 <div className={"grid grid-col-1 gap-1 overflow-auto custom_scrollbars " + (selectedButton[1] ? "block" : "hidden")}>
                     
                 </div>
+                {Object.values(sorted).length == 0 && selectedButton[1] &&
+                <div className='flex flex-col grow justify-center'>
+                    <h5 className='text-center text-charcoal font-light leading-6 px-5'>No friends yet. Add one by clicking the [+] button above. Or, ask a friend to send you a request.</h5>
+                </div>
+                }
                 
             </div>
             

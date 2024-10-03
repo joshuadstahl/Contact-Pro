@@ -9,12 +9,12 @@ export enum userStatus {
 
 export class User {
 
-    constructor({_id, name, photo, status, email, username}: {_id: string | ObjectId, name: string, photo: string, status: userStatus, email: string, username : string}) {
+    constructor({_id, name, photo, status, email, username}: {_id: string | ObjectId, name: string, photo: string, status: userStatus, email?: string, username : string}) {
         this._id = _id.toString();
         this.name = name;
         this.photo = photo;
         this.status = status;
-        this.email = email;
+        this.email = email ?? "";
         this.username = username;
     }
 
@@ -22,6 +22,6 @@ export class User {
     public name = "";
     public photo = "";
     public status = userStatus.OFFLINE;
-    public email = "";
+    public email? = "";
     public username = "";
 }

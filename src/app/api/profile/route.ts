@@ -30,7 +30,8 @@ export const GET = auth(async function GET(req) {
                     savedStatus: null
                 }
             );
-            await userCollection.insertOne({...newU, _id:undefined});
+            let res = await userCollection.insertOne({...newU, _id:undefined});
+            newU._id = res.insertedId.toString(); //assign the new id to the object.
             user = newU;
         }
 
