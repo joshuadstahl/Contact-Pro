@@ -1,9 +1,11 @@
-import { generateSlug, RandomWordOptions } from "random-word-slugs";
 import { useState, ChangeEvent, useContext } from "react";
 import { User } from "@/app/classes/user";
 import FullScreenModal from "./fullScreenModal";
 import Button from "../button";
 import { userRepository } from "@/app/app/page";
+import { randomUsername } from "../util/functions";
+
+
 
 export default function OnboardingModal({currUser, userRepo, setUserRepo, pageLoaded, onboardingComplete, setOnboardingComplete} : {currUser: string, userRepo:userRepository, setUserRepo: Function, pageLoaded: boolean, onboardingComplete: boolean, setOnboardingComplete: Function}) {
     
@@ -12,23 +14,7 @@ export default function OnboardingModal({currUser, userRepo, setUserRepo, pageLo
     const [buttonSubmitting, setButtonSubmitting] = useState(false); //handles the submit button's state
     const [onErrorText, setOnErrorText] = useState("Username already taken"); //stores the text for the error message.
    
-    //generates a random username
-    function randomUsername(): string {
-        const options: RandomWordOptions<2> = {
-            format: "camel",
-            partsOfSpeech: ["adjective", "noun"],
-            categories: {
-                adjective: ["color", "appearance"],
-                noun: ["animals", "food"]
-            }
-        }
-        let slug = generateSlug(2, options); //generate the two words together
-        slug = slug.charAt(0).toUpperCase() + slug.slice(1); //uppercase the first letter
-        const num = Math.round(Math.random() * 1000); //generate the random 3 numbers at the end
-        let num2 = num.toString().padStart(3, "0"); //pad the random 3 numbers with 0s
-
-        return slug + num2;
-    }
+    
 
     //sets the username to a new random username
     function newRandomUsername() {

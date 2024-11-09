@@ -3,7 +3,7 @@ import { userStatus, User } from "./user";
 
 export class ServerUser {
 
-    constructor({_id, name, photo, status, email, username, savedStatus = null}: {_id?:string, name: string, photo: string, status: userStatus, email: string, username : string, savedStatus: userStatus | null}) {
+    constructor({_id, name, photo, status, email, username, savedStatus = null, friends}: {_id?:string, name: string, photo: string, status: userStatus, email: string, username : string, savedStatus: userStatus | null, friends: Array<ObjectId> | Array<string>}) {
         this._id = _id ?? "";
         this.name = name;
         this.photo = photo;
@@ -11,6 +11,7 @@ export class ServerUser {
         this.email = email;
         this.username = username;
         this.savedStatus = savedStatus;
+        this.friends = friends !== undefined ? friends.map((frnd) => frnd.toString()) : [];
     }
 
     public _id: string
@@ -20,6 +21,7 @@ export class ServerUser {
     public email = "";
     public username = "";
     public savedStatus;
+    public friends : Array<string>;
 
     public export(currUserID: string) {
 

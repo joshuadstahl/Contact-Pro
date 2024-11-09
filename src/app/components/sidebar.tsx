@@ -7,7 +7,7 @@ import Copyright from './copyright';
 import { chatRepository } from '../app/page';
 import { Chat } from '../classes/chats';
 
-function Sidebar({chats, selectedChatID, selectedChatToggler} : {chats: chatRepository, selectedChatID: string, selectedChatToggler:Function}) {
+function Sidebar({chats, selectedChatID, selectedChatToggler, addingChat, setAddingChat} : {chats: chatRepository, selectedChatID: string, selectedChatToggler:Function, addingChat:boolean, setAddingChat:Function}) {
   
     const [selectedButton, setSelectedButton] = useState([true, false]);
 
@@ -64,7 +64,7 @@ function Sidebar({chats, selectedChatID, selectedChatToggler} : {chats: chatRepo
                 <div className='flex flex-row flex-nowrap items-center'>
                     <h2 className={"flex text-xl text-left "  + (selectedButton[0] ? "block" : "hidden")}>Chats</h2>
                     <h2 className={"flex text-xl text-left "  + (selectedButton[1] ? "block" : "hidden")}>Friends</h2>
-                    <button><i className="bi bi-plus-square stroke-1 text-black ml-3"></i></button>
+                    <button onClick={() => setAddingChat(!addingChat)}><i className="bi bi-plus-square stroke-1 text-black ml-3"></i></button>
                 </div>
 
                 {/* This is the code for the Chats Tab */}

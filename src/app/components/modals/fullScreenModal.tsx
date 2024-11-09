@@ -7,9 +7,9 @@ export default function FullScreenModal({children, shown, backdrop = true, delay
 
     return (
         <div>
-            {backdropRender && backdrop && <div className={"fixed flex flex-row wrap-none items-center h-full max-h-full w-full max-w-full overflow-hidden z-10 bg-black opacity-50 backdrop-blur-xl modalBackdrop " + backdropCurrentClass}>
+            {backdropRender && backdrop && <div className={"fixed flex flex-row wrap-none items-center h-full max-h-full w-full max-w-full overflow-hidden z-30 bg-black opacity-50 backdrop-blur-xl modalBackdrop " + backdropCurrentClass}>
             </div>}
-            {modalRender && <div className={"fixed flex flex-row wrap-none items-center h-full max-h-full w-full max-w-full overflow-hidden z-20 modal " + modalCurrentClass }>
+            {modalRender && <div className={"fixed flex flex-row wrap-none items-center h-full max-h-full w-full max-w-full overflow-hidden z-40 modal " + modalCurrentClass }>
                 {children}
             </div>}
         </div>

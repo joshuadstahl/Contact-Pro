@@ -1,5 +1,5 @@
 import { auth } from "@/auth";
-import { MongoClient, Collection, Db, FindCursor, ObjectId } from "mongodb";
+import { MongoClient, Collection, Db, ObjectId } from "mongodb";
 import { NextRequest, NextResponse } from "next/server";
 import { User } from "@/app/classes/user";
 import { ServerUser } from "@/app/classes/serverUser";
@@ -8,7 +8,7 @@ import { ServerUser } from "@/app/classes/serverUser";
 //this sends out the chats for a user
 export const GET = async function GET(
     req: Request,
-    { params }: { params: { username: string } }) {
+    { params }: { params: { _id: string } }) {
     
     //make sure there is a valid session
     let session = await auth();
@@ -30,7 +30,7 @@ export const GET = async function GET(
         else {
             
             //const userCollection: Collection<ServerChat> = db.collection<ServerChat>("users");
-            let fetchedUser = await userCollection.findOne<ServerUser>({username: params.username ?? ""});
+            let fetchedUser = await userCollection.findOne<ServerUser>({_id: new ObjectId(params._id ?? "")});
 
             if (fetchedUser !== null) {
                 outUser = new ServerUser(fetchedUser).export(user._id);

@@ -136,7 +136,7 @@ export default function Navbar({sendWSMessage, setStatus, updateUserRepo, toggle
                         
                         </button>
                         <div className={"dropdownSlidedown absolute right-0 -left-4 bg-white " +
-                        "rounded-my border border-cadet_gray-300 p-2.5 z-10 noDropClose " + (toggled ? "dropdownSlidedownShown" : "")}>
+                        "rounded-my border border-cadet_gray-300 p-2.5 z-30 noDropClose " + (toggled ? "dropdownSlidedownShown" : "")}>
                             <DropdownMenuItem>
                                 <i className="bi bi-person-fill ml-1.5 mr-1.5 text-charcoal"></i>
                                 <p className="text-xs text-charcoal ">Account</p>
@@ -156,7 +156,7 @@ export default function Navbar({sendWSMessage, setStatus, updateUserRepo, toggle
                             </DropdownMenuItem>
                         </div>
                         <div className={"dropdownSlideLeft absolute top-full bg-white rounded-my border " +
-                            "border-cadet_gray-300 p-2.5 z-10 noDropClose" + (statusToggled ? " dropdownSlideLeftShown" : "") + (slideUp ? " dropdownSlideLeftUp" : "")}>
+                            "border-cadet_gray-300 p-2.5 z-30 noDropClose" + (statusToggled ? " dropdownSlideLeftShown" : "") + (slideUp ? " dropdownSlideLeftUp" : "")}>
                             <DropdownMenuItem callback={backFromStatusToggle} noClose={true}>
                                 <i className="bi bi-caret-left-fill ml-1.5 mr-1.5 text-charcoal"></i>
                                 <p className="text-xs text-charcoal">Back</p>

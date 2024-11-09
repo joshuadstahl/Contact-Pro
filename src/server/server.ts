@@ -55,7 +55,10 @@ interface dbRawChat {
 	chatType: string,
 	members: Array<string>,
 	photo: string,
-	name: string
+	name: string,
+	owner: ObjectId,
+	chatCreationNotified: boolean,
+	timestamp: Date
 }
 
 interface dbRawMessage {
@@ -481,6 +484,67 @@ wss.on('connection', async function connection(ws: WebSocket, request) {
 							} 
 							catch (err) {
 								ws.send(JSON.stringify({"msgType":"messageCreationFailed", data: {_id: _id}}));
+							}
+						}
+						break;
+					case "newChat":
+						//received when a new chat is created
+
+						if (msg.data !== undefined) {
+							let _id = msg.data._id !== undefined ? msg.data._id : "";
+							try {
+
+								const chatCollection = db.collection<dbRawChat>("chats_raw");
+								const chat = await chatCollection.findOne<dbRawChat>({_id: new ObjectId(String(_id.toString()))})
+
+								if (chat !== null) {
+									
+									//if the owner (creator) of the chat is not equal to current user's chat, then
+									//the user is not authorized.
+									if (chat.owner.toString() != currUserID) {
+										ws.send(JSON.stringify({"msgType":"Not authorized for this action.", data: {_id: _id}}));
+									}
+
+									//if the user has already sent this message for this chat, return an error,
+									//because I don't want DOS attacks on my users.
+									if (chat.chatCreationNotified == true) {
+										ws.send(JSON.stringify({"msgType":"Action previously performed for this chat", data: {_id: _id}}));
+									}
+
+									let out = {
+										msgType: "newChat",
+										data: {
+											_id: chat._id.toString()
+										}
+									}
+
+									chat.members.forEach(client => {
+										//if the current client(member) is online, send the new message to the client
+										if (client in clients) {
+											clients[client].forEach(clientWS => {
+												
+												//if the client WS is not the same as the current websocket,
+												//send it a message about the new chat
+												if (clientWS != ws) {
+													clientWS.send(JSON.stringify(out));
+												}
+											})
+										}
+									});
+
+								
+									//update the database for the chat
+									let res = await chatCollection.updateOne({_id: new ObjectId(String(_id.toString()))}, {$set: {chatCreationNotified: true}});
+									if (res.modifiedCount == 0) {
+										console.log("didn't update database after new chat notification");
+									}
+
+								}								
+
+							} 
+							catch (err) {
+								console.log(err);
+								ws.send(JSON.stringify({"msgType":"newChatNotifyFailed", data: {_id: _id}}));
 							}
 						}
 						break;

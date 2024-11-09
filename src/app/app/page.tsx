@@ -3,11 +3,9 @@ import Image from "next/image";
 import Sidebar from '../components/sidebar';
 import Navbar from "../components/navbar";
 import ChatWindow from '../components/chatWindow';
-import { BlankChat, Chat, UserChat, GroupChat } from "../classes/chats";
-import { ChatButtonGroup } from "../classes/chatButtonGroup";
+import { Chat, UserChat, GroupChat } from "../classes/chats";
 import { Message } from "../classes/messages";
 import { userStatus, User } from "../classes/user";
-import { msgStatusEnum } from "../classes/messages";
 import { useState, ChangeEvent, useEffect, useRef, useCallback } from "react";
 import { CurrentUserContext } from "../components/context/currentUserContext";
 import { UserRepositoryContext } from "../components/context/userRepositoryContext";
@@ -18,6 +16,7 @@ import FullScreenModal from "../components/modals/fullScreenModal";
 import FormSub from "../components/formSub";
 import { Logout } from "../components/util/serverFunctions";
 import OnboardingModal from "../components/modals/onboardingModal";
+import useSWRImmutable from "swr/immutable";
 
 export interface userRepository {
     [userID: string]: User
@@ -33,21 +32,33 @@ export default function App() {
         return fetch(input, init).then(res => res.json());
     }
 
+    const friendFetcher = (input: Array<string>, init?: RequestInit) => {
+        const f = (u:string) => fetch("/api/user/" + u).then((r) => r.json());
+        let p = Promise.all(input.map((id) => f(id)));
+        console.log(p);
+        return p;
+    }
+
     const blankuser = new User({_id: "0", name: "NA", photo:"/static/noPhoto.png", email:"blank@gmail.com", status: userStatus.OFFLINE, username:"0"});
-    const {data, error, isLoading} = useSWR('/api/profile', fetcher); //get the signed in user
-    let userInfo = data ?? blankuser;
+    const {data : userProfile, error, isLoading} = useSWR('/api/profile', fetcher); //get the signed in user
 
     const [chatGroups, setChatGroups] = useState<chatRepository>({}); //to keep a list of chats
+    const chatGroupsRef = useRef<chatRepository>({}); //necessary so that the event handler function handling the websocket events will always be up to date.
+    const [friends, setFriends] = useState<Array<string>>([]); //keep track of a list of friends' ids.
+    const [friendsLoaded, setFriendsLoaded] = useState(false); //if the friends are loaded or not.
     const [chatGroupsLoaded, setChatGroupsLoaded] = useState(false); //to keep track if the chat groups have been loaded or not (especially for the case when there are no chats to be loaded.)
     const [selectedChatID, setSelectedChatID] = useState<string>(""); //to keep track of the id of the open chat
     const [currUser, setCurrUser] = useState<string>(""); //to keep the object of the current user
+	const [currUserLoaded, setCurrUserLoaded] = useState(false); //to keep track if the current user is loaded or not.
     const [loaded, setLoaded] = useState(false); //to keep track if everything is loaded or not
-    const [loadedCount, setLoadedCount] = useState(0); //to keep track of how many items are loaded
     const [onboardingComplete, setOnboardingComplete] = useState(true); //if user onboarding is complete
     const [websocket, setWebsocket] = useState<WebSocket>({} as WebSocket); //stores the websocket
     const [userRepo, setUserRepo] = useState<userRepository>({});
     const [oldestUnreadMessageID, setOldestUnreadMessageID] = useState(""); //keep track of the oldest unread message (if such thing)
     const [webSocketListener, setWebSocketListener] = useState(false); //keep track if there is a websocket listener already.
+	const [webSocketDeliveredNotifySent, setWebSocketDeliveredNotifySent] = useState(false); //if the web socket after it is connected told the websocket connection the messages it received.
+	const [webSocketConnectionStarted, setWebSocketConnectionStarted] = useState(false); //if the web socket is being connected to.
+    const [addingChat, setAddingChat] = useState(false); //keep track if a chat is being added (thus if the add chat modal is open)
     const refSelectedChatID = useRef(""); //use Ref hook so webhook message event handler can access an updated version of selectedChatID.
     const refWebSocketListener = useRef(false); //use Ref hook so the code handling the WS connection can keep notified of the websocket event handler status.
     const loggingOut = useRef(false); //keeps track if the code is currently logging out so that the websocket doesn't keep trying to reconnect.
@@ -55,6 +66,39 @@ export default function App() {
     const chats = useSWR('/api/chats', fetcher); //get the chats
 
     /*************************  FUNCTIONS  **************************/
+
+    //function to keep the chat groups up to date (across the ref and the state)
+    const chatGroupsUpdater = useCallback(function chatGroupsUpdater(chatGroups: chatRepository) {
+        setChatGroups(chatGroups);
+        chatGroupsRef.current = chatGroups;
+    }, [setChatGroups, chatGroupsRef]);
+
+	//takes an object and converts it to a chat group, either a group chat or user chat
+	const convertToChatGroup = useCallback(function convertToChatGroup(chat: {
+			chatID: string,
+			name: string,
+			chatType: string,
+			photo: string,
+			messages: Array<Message>,
+			members: Array<User>,
+			otherUser: User
+		}) {
+
+		let theMessages : Array<Message> = chat.messages.map((msg) => {               
+			return new Message({...msg, _id:msg.msgID.toString()});
+		})
+
+		//create the chat button groups (really just the chat groups)
+		let newChat: Chat;
+		if (chat.chatType == "user") {
+			newChat = new UserChat({...chat, messages:theMessages});
+		}
+		else { //assume it is a group            
+			newChat = new GroupChat({...chat, messages:theMessages});
+		}
+		return newChat;
+	}, [])
+
     const sendWSMessage = useCallback(function sendWSMessage(message: object|string) {
         if (websocket.readyState == WebSocket.OPEN) {
             websocket.send(JSON.stringify(message));
@@ -66,26 +110,26 @@ export default function App() {
     }, [websocket]);
 
     const selectedChatToggler = useCallback(function selectedChatToggler(id:string) {
-        if (id in chatGroups) {
+		let chatGroups = chatGroupsRef.current
+        if (id in chatGroupsRef.current) {
             let temp = chatGroups[id].messages.find((x) => x.read == false);
             setOldestUnreadMessageID(temp !== undefined ? temp.msgID : "");
             setSelectedChatID(id);
             refSelectedChatID.current = id; //update the useRef version of the selected Chat ID.
             let copy = {...chatGroups};
             copy[id].setAllMessagesRead(sendWSMessage, currUser);
-            setChatGroups({...copy});
+            chatGroupsUpdater({...copy});
         }
-    }, [chatGroups, setChatGroups, setSelectedChatID, sendWSMessage, setOldestUnreadMessageID, refSelectedChatID, currUser])
+    }, [chatGroupsUpdater, setSelectedChatID, sendWSMessage, setOldestUnreadMessageID, refSelectedChatID, currUser])
 
     const addNewMessage = useCallback(function addNewMessage(msg: Message, chatID: string) {
-        let copy = {...chatGroups};
+        let copy = {...chatGroupsRef.current};
         Object.values(copy).forEach((grp) => {
             if (grp.chatID == chatID) {
                 grp.newMessage({msg});
                 if (refSelectedChatID.current == chatID) {
                     //if the window has focus, then set all the messages to be read.
                     if (document.hasFocus()) {
-                        console.log("All messages read!");
                         grp.setAllMessagesRead(sendWSMessage, currUser);
                     }
                     else {
@@ -116,8 +160,8 @@ export default function App() {
                 }
             }
         })
-        setChatGroups(copy);
-    }, [chatGroups, selectedChatToggler, setOldestUnreadMessageID, setChatGroups, currUser, sendWSMessage])
+        chatGroupsUpdater(copy);
+    }, [selectedChatToggler, setOldestUnreadMessageID, chatGroupsUpdater, currUser, sendWSMessage])
 
     const changeStatus = useCallback(function changeStatus(userID: string, status: userStatus|Number) {
         let copy = {...userRepo};
@@ -128,134 +172,157 @@ export default function App() {
     }, [userRepo, setUserRepo])
     
     const WSIncomingMessageHandler = useCallback(
-        function WSIncomingMessageHandler(event: MessageEvent) {
-          let body;
-          try {
-              body = JSON.parse(event.data);
-          }
-          catch(err) {
-              return;
-          }
-      
-          if (body.msgType == "userUpdate") {
-              if (body.data !== undefined && body.data.updateType !== undefined) {
-                  if (body.data.updateType == "status") {
-                      changeStatus(body.data.userID ?? "", body.data.status ?? 0);
-                  }
-              }
-          }
-          else if (body.msgType == "message") {
-              if (body.data !== undefined) {
-                  let data = body.data;
-                  if (data._id !== undefined && data.message !== undefined && data.sender !== undefined && 
-                      data.timestamp !== undefined && data.read !== undefined && data.chatID !== undefined) {
-      
-                      let read = data.read;
-                      if (selectedChatID == data.chatID && document.hasFocus()) {
-                          read = true;
-                      }
-                      
-                      addNewMessage(new Message({message: data.message, _id: data._id, sender: userRepo[data.sender], timestamp: new Date(data.timestamp), status: data.status, read:read, received: true}), data.chatID);
-                      sendWSMessage({msgType: "messageUpdate", data: {_id: data._id, received: true, read: read}});
-                  }
-              }
-          }
-          else if (body.msgType == "messageUpdate") {
-              if (body.data !== undefined && body.data._id !== undefined && body.data.status !== undefined) {
-                  let copy = {...chatGroups};
-                  for (let i = 0; i < Object.values(copy).length; i++) {
-                      let grp = Object.values(copy)[i];
-                      let doBreak = false;
-                      for (let j = 0; j < grp.messages.length; j++) {
-                          if (grp.messages[j].msgID == body.data._id) {
-                              grp.messages[j].status = body.data.status;
-                              doBreak = true;
-                              break;
-                          }
-                      }
-                      if (doBreak) break;
-                  }
-                  setChatGroups(copy); //update the chat groups
-              }
-          }
-          else if (body.msgType == "messageCreated") {
-      
-              //the idea is to update the created message to have the new id from the server.
-              if (body.data !== undefined && body.data.oldid !== undefined && body.data.newid !== undefined) {
-                  let copy = {...chatGroups};
-                  Object.values(copy).forEach((grp) => {
-                      grp.messages.forEach(msg => {
-                          if (msg.msgID == body.data.oldid) {
-                              msg.msgID = body.data.newid ?? "";
-                          }
-                      });
-                  })
-                  setChatGroups(copy); //update the chat groups
-              }
-              
-          }
-          else if (body.msgType == "messageCreationFailed") {
-              if (body.data !== undefined) {
-                  if (body.data.id != undefined) {
-                      let copy = {...chatGroups};
-                      Object.values(copy).forEach((grp) => {
-                          grp.messages.forEach(msg => {
-                              if (msg.msgID == body.data.id) {
-                                  
-                              }
-                          });
-                      })
-                      setChatGroups(copy); //update the chat groups
-                  }
-              }
-          }
-      
-          
-    }, [changeStatus, addNewMessage, sendWSMessage, selectedChatID, chatGroups, setChatGroups, userRepo])
+        async function WSIncomingMessageHandler(event: MessageEvent) {
+			let body;
+			try {
+				body = JSON.parse(event.data);
+			}
+			catch(err) {
+				return;
+			}
+		
+			if (body.msgType == "userUpdate") {
+				if (body.data !== undefined && body.data.updateType !== undefined) {
+					if (body.data.updateType == "status") {
+						changeStatus(body.data.userID ?? "", body.data.status ?? 0);
+					}
+				}
+			}
+			else if (body.msgType == "message") {
+				if (body.data !== undefined) {
+					let data = body.data;
+					if (data._id !== undefined && data.message !== undefined && data.sender !== undefined && 
+						data.timestamp !== undefined && data.read !== undefined && data.chatID !== undefined) {
+		
+						let read = data.read;
+						if (selectedChatID == data.chatID && document.hasFocus()) {
+							read = true;
+						}
+						
+						addNewMessage(new Message({message: data.message, _id: data._id, sender: userRepo[data.sender], timestamp: new Date(data.timestamp), status: data.status, read:read, received: true}), data.chatID);
+						sendWSMessage({msgType: "messageUpdate", data: {_id: data._id, received: true, read: read}});
+					}
+				}
+			}
+			else if (body.msgType == "messageUpdate") {
+				if (body.data !== undefined && body.data._id !== undefined && body.data.status !== undefined) {
+					let copy = {...chatGroupsRef.current};
+					for (let i = 0; i < Object.values(copy).length; i++) {
+						let grp = Object.values(copy)[i];
+						let doBreak = false;
+						for (let j = 0; j < grp.messages.length; j++) {
+							if (grp.messages[j].msgID == body.data._id) {
+								grp.messages[j].status = body.data.status;
+								doBreak = true;
+								break;
+							}
+						}
+						if (doBreak) break;
+					}
+					chatGroupsUpdater(copy); //update the chat groups
+				}
+			}
+			else if (body.msgType == "messageCreated") {
+		
+				//the idea is to update the created message to have the new id from the server.
+				if (body.data !== undefined && body.data.oldid !== undefined && body.data.newid !== undefined) {
+						let copy = {...chatGroupsRef.current};
+						Object.values(copy).forEach((grp) => {
+							grp.messages.forEach(msg => {
+								if (msg.msgID == body.data.oldid) {
+									msg.msgID = body.data.newid ?? "";
+								}
+							});
+						})
+						chatGroupsUpdater(copy); //update the chat groups
+				}
+				
+			}
+			else if (body.msgType == "messageCreationFailed") {
+				if (body.data !== undefined) {
+					if (body.data.id != undefined) {
+						let copy = {...chatGroupsRef.current};
+						Object.values(copy).forEach((grp) => {
+							grp.messages.forEach(msg => {
+								if (msg.msgID == body.data.id) {
+									
+								}
+							});
+						})
+						chatGroupsUpdater(copy); //update the chat groups
+					}
+				}
+			}
+			else if (body.msgType == "newChat") {
+				if (body.data !== undefined) {
+					let data = body.data;
+					if (data._id !== undefined) {
+						
+						let resp;
+						let copy = {...chatGroupsRef.current};
+						try {
+							let temp = await fetch("/api/chat/?id=" + data._id);
+							if (temp.ok) {
+								resp = await temp.json();
+							}
+							else {
+								console.log("Failed to successfully retrieve new chat from api.");
+								return;
+							}
+
+						}
+						catch (err) {
+							//something happened loading the new chat from the server. Log error in the console and return.
+							console.error(err);
+							return;
+						}
+
+						//convert the raw object from the server to a chat object
+						let newChat = convertToChatGroup(resp);
+
+						//add the new chat to the chat group repo, and update the state.
+						copy[newChat.chatID] = newChat;
+						chatGroupsUpdater(copy);
+					}
+
+				}
+			}
+    	}, 
+	[changeStatus, addNewMessage, sendWSMessage, selectedChatID, chatGroupsUpdater, userRepo, chatGroupsRef, convertToChatGroup])
 
 
     /*************************  PAGE LOGIC  **************************/
 
     //handle the current user data
-    if (data !== undefined && currUser == "") {
-        setCurrUser(data.user._id);
-        setOnboardingComplete(!data.newUser);
-        setLoadedCount(loadedCount + 1);
+    if (userProfile !== undefined && currUser == "" && !currUserLoaded) {
+        setCurrUser(userProfile.user._id);
+        setOnboardingComplete(!userProfile.newUser);
+        setCurrUserLoaded(true);
 
         //set the current user info
         let copy = {...userRepo};
-        copy[data.user._id] = new User(data.user);
+        copy[userProfile.user._id] = new User(userProfile.user);
+
         setUserRepo(copy);
+
     }
 
-    //handle the chats data
-    if (chats.data !== undefined && Object.keys(chatGroups).length == 0 && chatGroupsLoaded == false) {
+	//handle the chats data
+    if (chats.data !== undefined && !chatGroupsLoaded) {
         if (chats.data.message != "Not authenticated" && chats.data.chats.length !== undefined && chats.data.chats.length != 0) {
             let cg2 = {...chatGroups};
             let userRepoCopy: userRepository = {...userRepo}; //what is going to update the user repository
             chats.data.chats.forEach((chat: {
-                chatID: string,
-                name: string,
-                chatType: string,
-                photo: string,
-                messages: Array<Message>,
-                members: Array<User>,
-                otherUser: User
-            }) => {
-                //remap the messages to message objects. (and send delivered notifications if necessary)
-                let theMessages : Array<Message> = chat.messages.map((msg) => {               
-                    return new Message({...msg, _id:msg.msgID.toString()});
-                })
-
-                //create the chat button groups (really just the chat groups)
-                let newChat: Chat;
-                if (chat.chatType == "user") {
-                    newChat = new UserChat({...chat, messages:theMessages});
-                }
-                else { //assume it is a group            
-                    newChat = new GroupChat({...chat, messages:theMessages});
-                }
-                cg2[newChat.chatID] = newChat;
+				chatID: string,
+				name: string,
+				chatType: string,
+				photo: string,
+				messages: Array<Message>,
+				members: Array<User>,
+				otherUser: User
+			}) => {
+				//store new chat object
+				cg2[chat.chatID] = convertToChatGroup(chat);
 
                 //import the users from the chat into the users database
                 chat.members.map((usr) => {
@@ -265,20 +332,38 @@ export default function App() {
                     }
                 });
             });
-            console.log(cg2);
-            setChatGroups(cg2);
+            chatGroupsUpdater(cg2);
             setUserRepo(userRepoCopy);
         }
 
-        setLoadedCount(loadedCount + 1);
         setChatGroupsLoaded(true);
         
     }
 
-    //handle the chats again after the websocket has been connected to 
-    //send delivered notifications to the websocket server.
+	//handle the friends data
+    const rawFriends = useSWR(userProfile !== undefined ? '/api/friends' : null, fetcher); //get the friends
+
+    if (rawFriends.data !== undefined && friendsLoaded == false && chatGroupsLoaded == true && currUserLoaded !== undefined) {
+        let newFriends : Array<string> = [];
+        let userRepoCopy = {...userRepo}
+        for (let i = 0; i < rawFriends.data.friends.length; i++) {
+            let currFriend = new User(rawFriends.data.friends[i]);
+            if (!(currFriend._id.toString() in userRepoCopy)) {
+                userRepoCopy[currFriend._id.toString()] = currFriend;
+            }
+            newFriends.push(currFriend._id);
+        }
+
+        setUserRepo(userRepoCopy);
+        setFriends(newFriends);
+        setFriendsLoaded(true);
+    }
+
+    
+    //Handle the chats again after the websocket has been connected to to
+    //send message delivered notifications to the websocket server.
     //Wait for the websocket to be open and a listener registered.
-    if (loadedCount == 3 && websocket.readyState == WebSocket.OPEN && webSocketListener) {
+    if (!webSocketDeliveredNotifySent && websocket.readyState == WebSocket.OPEN && webSocketListener) {
         let copy = {...chatGroups};
         Object.keys(copy).forEach(key => {
             let group = copy[key];
@@ -292,8 +377,8 @@ export default function App() {
             
         });
 
-        setLoadedCount(4);
-        setChatGroups(copy);
+		setWebSocketDeliveredNotifySent(true);
+        chatGroupsUpdater(copy);
         
     }
 
@@ -388,16 +473,18 @@ export default function App() {
              }
         }
 
-        //we want the websocket to be the second thing initialized, hence the loadedCount >= 1
-        if (loaded == false && loadedCount == 2 && Object.keys(websocket ?? {}).length == 0) {
+        //we want the websocket to be the second thing initialized, hence checking if the currUserLoaded and chatGroupsLoaded are true.
+		//Also, make sure that we haven't already started connecting to the websocket.
+        if (loaded == false && currUserLoaded && chatGroupsLoaded && !webSocketConnectionStarted && Object.keys(websocket ?? {}).length == 0) {
             WebSocketConnect();
-            setLoadedCount(3);
+			setWebSocketConnectionStarted(true);
         }
         
-    }, [loaded, loadedCount, setLoadedCount, websocket, setWebsocket, selectedChatID, 
-        userRepo, currUser, WSIncomingMessageHandler, setWebSocketListener])
+    }, [loaded, currUserLoaded, chatGroupsLoaded, websocket, setWebsocket, selectedChatID, 
+        userRepo, currUser, WSIncomingMessageHandler, setWebSocketListener, webSocketConnectionStarted, setWebSocketConnectionStarted])
     
-    if (loadedCount == 4 && loaded == false) {
+	let safeToLoad = currUserLoaded && chatGroupsLoaded && friendsLoaded && webSocketDeliveredNotifySent;
+    if (safeToLoad && loaded == false) {
         setLoaded(true);
     }
     
@@ -440,8 +527,6 @@ export default function App() {
   }
 
   const [doLogout, setDoLogout] = useState(false);
-
-  //console.log("Current state from root of App of selectedChatID ", selectedChatID);
   
   return (
 
@@ -452,7 +537,7 @@ export default function App() {
             await Logout()
         }}/>}
         <OnboardingModal currUser={currUser} userRepo={userRepo} setUserRepo={setUserRepo} pageLoaded={loaded} onboardingComplete={onboardingComplete} setOnboardingComplete={setOnboardingComplete}/>
-        <FullScreenModal shown={logoutModalOpen} backdrop={false} delayShow={50}>
+        <FullScreenModal shown={logoutModalOpen} backdrop={true} delayShow={50}>
             <div className="flex flex-col wrap-none items-center grow">
                 <div className="border border-cadet_gray-300 rounded-my  bg-white">
                     <div className="flex flex-col wrap-none items-end">
@@ -479,12 +564,10 @@ export default function App() {
                 <CurrentUserContext.Provider value={currUser}>
                     <Navbar sendWSMessage={sendWSMessage} setStatus={changeStatus} updateUserRepo={setUserRepo} toggleLogoutModal={toggleLogoutModal}/>
                     <div className="flex flex-row gap-2.5 h-full max-h-full overflow-hidden leading-none">
-                        <Sidebar chats={chatGroups} selectedChatID={selectedChatID} selectedChatToggler={selectedChatToggler}/>
-                        <ChatWindow chatGroups={chatGroups} setChatGroups={setChatGroups} addNewMessage={addNewMessage} sendWSMessage={sendWSMessage} chatID={selectedChatID} userRepo={userRepo} oldestUnreadMessageID={oldestUnreadMessageID} setOldestUnreadMessageID={setOldestUnreadMessageID}/>
+                        <Sidebar chats={chatGroups} selectedChatID={selectedChatID} selectedChatToggler={selectedChatToggler} addingChat={addingChat} setAddingChat={setAddingChat}/>
+                        <ChatWindow chatGroups={chatGroups} chatGroupsUpdater={chatGroupsUpdater} addNewMessage={addNewMessage} sendWSMessage={sendWSMessage} 
+                        chatID={selectedChatID} userRepo={userRepo} oldestUnreadMessageID={oldestUnreadMessageID} addingChat={addingChat} setAddingChat={setAddingChat}/>
                     </div>
-                    {/* <button onClick={() => setUserStatusToOnline("larrysmith")}>Online</button> */}
-                    {/* <button onClick={() => changeName()}>Change</button> */}
-                    {/* <button onClick={newMessage}>New Message</button> */}
                 </CurrentUserContext.Provider>
             </UserRepositoryContext.Provider>
             }

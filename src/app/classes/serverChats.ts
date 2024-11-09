@@ -2,12 +2,11 @@ import { ObjectId } from "mongodb";
 import { iRecipientStatuses, ServerMessage } from "./serverMessage";
 import { userStatus, User } from "./user";
 import { ServerUser } from "./serverUser";
-import { Message } from "./messages";
 
 export class ServerChat {
 
     constructor({name, messages, chatType = "chat", photo, _id, members, membersArray, accessingUser}
-        : {name : string, messages: Array<ServerMessage>, chatType: string, photo: string, _id: string, 
+        : {name : string, messages: Array<ServerMessage>, chatType: string, photo: string, _id: ObjectId | string, 
             members:Array<ServerUser>, membersArray:Array<ObjectId>, accessingUser: string }) {
         this.name = name;
         //if it is a one-on-one chat
@@ -25,7 +24,7 @@ export class ServerChat {
             this.photo = photo;
         }        
         this.chatType = chatType;
-        this._id = _id.toString();
+        this._id = new ObjectId(_id.toString());
         this.messages = messages;
         this.members = members;
         this.membersArray = membersArray.map((m) => {
@@ -37,7 +36,7 @@ export class ServerChat {
     public name = "";
     public photo = "";
     public chatStatus = userStatus.OFFLINE;
-    public _id : string;
+    public _id : ObjectId;
     public chatType = "";
     public messages = new Array<ServerMessage>;
     public members = new Array<ServerUser>;

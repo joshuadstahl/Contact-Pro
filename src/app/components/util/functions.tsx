@@ -1,4 +1,5 @@
 import { userStatus } from "@/app/classes/user";
+import { RandomWordOptions, generateSlug } from "random-word-slugs";
 
 //returns the color class name for a userStatus
 export function GetColorBgClass(status: userStatus) : string {
@@ -78,4 +79,22 @@ export function GetFancyTime(timestamp: Date) {
     }
 
     return msgTime;
+}
+
+//generates a random username
+export function randomUsername(): string {
+    const options: RandomWordOptions<2> = {
+        format: "camel",
+        partsOfSpeech: ["adjective", "noun"],
+        categories: {
+            adjective: ["color", "appearance"],
+            noun: ["animals", "food"]
+        }
+    }
+    let slug = generateSlug(2, options); //generate the two words together
+    slug = slug.charAt(0).toUpperCase() + slug.slice(1); //uppercase the first letter
+    const num = Math.round(Math.random() * 1000); //generate the random 3 numbers at the end
+    let num2 = num.toString().padStart(3, "0"); //pad the random 3 numbers with 0s
+
+    return slug + num2;
 }
