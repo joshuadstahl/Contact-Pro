@@ -51,10 +51,10 @@ function Sidebar({chats, selectedChatID, selectedChatToggler, addingChat, setAdd
             <div className='flex flex-row flex-rows-1 mt-5 mb-7 gap-5 xl:gap-8 justify-center shrink-0'>
                 
                 <div className='flex flex-row justify-end'>
-                    <Button text="Chats" onClick={() => buttonToggler(0)} selected={selectedButton[0]} colorStyling='Light' color='PrimaryAlt' outline={false}/>
+                    <Button text="Chats" onClick={() => buttonToggler(0)} selected={selectedButton[0]} colorStyling='Light' color='PrimaryAlt' outline={true}/>
                 </div> 
                 <div className='flex flex-row justify-start'>
-                    <Button text="Friends" onClick={() => buttonToggler(1)} selected={selectedButton[1]} colorStyling='Light' color='PrimaryAlt' outline={false}/>
+                    <Button text="Friends" onClick={() => buttonToggler(1)} selected={selectedButton[1]} colorStyling='Light' color='PrimaryAlt' outline={true}/>
                 </div>
             </div>
 
