@@ -12,7 +12,7 @@ export default function ChatWindowModal({children, shown, backdrop = true, delay
             <div className="relative h-full max-h-full w-full max-w-full">
                 {backdropRender && backdrop && <div className={"absolute flex flex-row wrap-none items-center h-full max-h-full w-full max-w-full overflow-hidden z-10 bg-black opacity-50 backdrop-blur-xl modalBackdrop rounded-r-my " + backdropCurrentClass}>
                 </div>}
-                {modalRender && <div className={"absolute flex flex-row wrap-none items-center h-full max-h-full w-full max-w-full overflow-hidden z-20 modal " + modalCurrentClass }>
+                {modalRender && <div className={"absolute flex flex-row wrap-none items-center h-full max-h-full w-full max-w-full overflow-hidden z-20 modal rounded-r-my " + modalCurrentClass }>
                     {children}
                 </div>}
             </div>

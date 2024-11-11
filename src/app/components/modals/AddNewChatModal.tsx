@@ -1,29 +1,31 @@
 import ChatWindowModal from "./ChatWindowModal";
 import TextInput from "../textInput";
-import CloseableTextBubble from "../ClosableTextBubble";
 import Button from "../button";
 import Image from "next/image";
 import { useState, ChangeEvent, KeyboardEvent, useContext } from "react";
-import { strict } from "assert";
-import { text } from "stream/consumers";
 import { chatRepository } from "@/app/app/page";
 import { GroupChat, UserChat } from "@/app/classes/chats";
 import { CurrentUserContext } from "../context/currentUserContext";
 import { UserRepositoryContext } from "../context/userRepositoryContext";
+import FriendCloseableTextBubble from "../FriendCloseableTextBubble";
+import InvisibleTextBubble from "../InvisibleTextBubble";
+import ProfilePhoto from "../profilePhoto";
+
 
 export default function AddNewChatModal({open, setOpen, chatGroups, chatGroupsUpdater, sendWSMessage}: {open: boolean, setOpen: Function, chatGroups:chatRepository, chatGroupsUpdater: Function, sendWSMessage: Function}) {
 
     interface friendSearchItem {
         name: string,
         username: string,
-        _id: string
+        _id: string,
+        photo: string
     }
 
 
     let initialFriends : Array<friendSearchItem> = [ 
-        {name: "Joshua Stahl", username: "Joshstahl", _id:"66fda6234d3a1046d0924c75"}, 
-        {name: "Jakin Stahl", username: "jcstahl", _id:"555"},
-        {name: "Happy Guy", username: "LemonToast", _id:"66fddb304a9939565aaa8690"}
+        {name: "Joshua Stahl", username: "Joshstahl", _id:"66fda6234d3a1046d0924c75", photo:"https://lh3.googleusercontent.com/a/ACg8ocJfvuh7JYq8VlJojP2VaQ2KPpxq24jBWLyWScT_i_4CH86Y1kc0=s96-c"}, 
+        {name: "Jakin Stahl", username: "jcstahl", _id:"555", photo:"https://lh3.googleusercontent.com/a/ACg8ocJfvuh7JYq8VlJojP2VaQ2KPpxq24jBWLyWScT_i_4CH86Y1kc0=s96-c"},
+        {name: "Happy Guy", username: "DrabOyster850", _id:"672f7204fb87006681065271", photo:"https://lh3.googleusercontent.com/a/ACg8ocJfvuh7JYq8VlJojP2VaQ2KPpxq24jBWLyWScT_i_4CH86Y1kc0=s96-c"}
     ];
 
     const [friends, setFriends] = useState([...initialFriends]);
@@ -217,10 +219,10 @@ export default function AddNewChatModal({open, setOpen, chatGroups, chatGroupsUp
                     <div className="px-8 pb-8">
                         <h1 className="font-normal text-2xl text-center leading-none mb-8">Add a Chat</h1>
                         <div className="flex flex-col wrap-none items-center">
-                            <div className="flex flex-row wrap-none items-center mb-8">
+                            <div className="flex flex-row wrap-none items-center mb-6">
                                 <TextInput placeholder='New chat name' label="Chat name:" value={chatName} changedCallback={chatNameTextChange}></TextInput>
                             </div>
-                            <div className="flex flex-row wrap-none items-center mb-8">
+                            <div className="flex flex-row wrap-none items-left mb-8">
                                 <div className="relative">
                                     {/* <label className="absolute text-sm text-light text-charcoal" htmlFor={"friendsAdd"}>Chat members:</label> */}
                                     <label className="absolute w-full " htmlFor="friendsAdd">
@@ -232,29 +234,37 @@ export default function AddNewChatModal({open, setOpen, chatGroups, chatGroupsUp
                                         </div>
                                     </label>
                                     <div id={"friendsAdd"} className='p-2.5 border border-solid border-cadet_gray-300 rounded-my mt-5 w-96'>
-                                        <div className="flex flex-row flex-wrap items-left gap-y-1.5">
-                                            {
-                                                newGroupMembers.map((frnd) => {
-                                                    return <CloseableTextBubble key={frnd.name + frnd.username} text={frnd.name} xCallback={() => removeNewGroupMember(frnd)}/>
-                                                })
-                                            }
+                                        <div className="flex flex-row flex-wrap items-center gap-y-1.5">
                                             <div className="flex flex-col items-left relative grow">
-                                                <input value={friendSearchText} id="addFriendsSearch" onChange={addNewChatModalTextChange} onKeyDown={addNewChatModalMemberFieldKeyDown} className='outline-none text-xs grow ml-0.5' type="text" placeholder='Search for friends'/>
-                                                <div className={'absolute bg-white border border-solid border-cadet_gray-300 rounded-my p-1.5 text-xs left-0 top-5 wrap-none ' + (friendSearchText != "" ? "" : "hidden")}>
+                                                <input value={friendSearchText} id="addFriendsSearch" onChange={addNewChatModalTextChange} onKeyDown={addNewChatModalMemberFieldKeyDown} className='outline-none text-xs placeholder:text-xs placeholder:text-cadet_gray-600 grow ml-0.5' type="text" placeholder='Search for friends'/>
+                                                <div className={'absolute bg-white border border-solid border-cadet_gray-300 rounded-my px-5 py-2.5 text-xs -left-3 top-7 wrap-none z-10 ' + (friendSearchText != "" ? "" : "hidden")}>
                                                     {
                                                         filteredFriends.length > 0 && filteredFriends.map((usr) => {
-                                                            return <div key={usr.name + usr.username}><button className="text-nowrap" onClick={() => addNewGroupMember(usr)}>{usr.name + " (" + usr.username + ")"}</button></div>
+                                                            return <div className="flex flex-row items-center wrap-none mb-1.5" key={usr.name + usr.username}>
+                                                                <ProfilePhoto photo={usr.photo} tSizeNumber={5} className="mb-0.5"/>
+                                                                <button className="text-nowrap ml-1.5" onClick={() => addNewGroupMember(usr)}>{usr.name + " (" + usr.username + ")"}</button>
+                                                            </div>
                                                         })
                                                     }
                                                     {
                                                         filteredFriends.length == 0 && <div key={"noresult"}><button>{"No Result"}</button></div>
                                                     }
                                                 </div>
-                                            </div>
-                                            
+                                                
+                                            </div>                                            
                                         </div>                                                
                                     </div>
-                                    
+                                    {newGroupMembers.length > 0 && <div id={"membersList"} className='rounded-my mt-4 w-96'>
+                                        <div className="flex flex-row flex-wrap items-center gap-y-1.5">
+                                            {
+                                                newGroupMembers.map((frnd) => {
+                                                    return <FriendCloseableTextBubble key={frnd.name + frnd.username} text={frnd.name} photo={frnd.photo} xCallback={() => removeNewGroupMember(frnd)}/>
+                                                })
+                                            }
+                                            
+                                        </div>
+                                    </div>}
+
                                     
                                 </div>
                                 
