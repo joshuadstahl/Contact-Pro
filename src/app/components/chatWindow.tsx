@@ -111,7 +111,7 @@ function ChatWindow({chatID, userRepo, sendWSMessage, addNewMessage, chatGroups,
                     </div>
                 </div>
             </div>}
-            {type == "empty" && <div className='flex flex-row flex-nowrap items-center min-h-full border-solid border-1 border-cadet_gray-300'>
+            {type == "empty" && <div className='flex flex-row flex-nowrap items-center min-h-full rounded-r-my border-solid border-1 border-cadet_gray-300'>
                 <h2 className='grow font-light text-base text-center'>Select a contact or group chat to get started</h2>
             </div>}
             <AddNewChatModal open={addingChat} setOpen={setAddingChat} chatGroups={chatGroups} chatGroupsUpdater={chatGroupsUpdater} sendWSMessage={sendWSMessage}/>
