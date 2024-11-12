@@ -13,9 +13,9 @@ import AddNewChatModal from './modals/AddNewChatModal';
 
 
 function ChatWindow({chatID, userRepo, sendWSMessage, addNewMessage, chatGroups, chatGroupsUpdater, oldestUnreadMessageID, 
-    addingChat, setAddingChat} : {chatID: string, userRepo: userRepository, sendWSMessage:Function, 
+    addingChat, setAddingChat, friends} : {chatID: string, userRepo: userRepository, sendWSMessage:Function, 
         addNewMessage: Function, chatGroups: chatRepository, chatGroupsUpdater: Function, oldestUnreadMessageID: string, 
-         addingChat: boolean, setAddingChat: Function}) {
+         addingChat: boolean, setAddingChat: Function, friends:Array<string>}) {
     
     const currUser = useContext(CurrentUserContext);
     let chat = chatGroups[chatID] ?? new BlankChat();
@@ -126,7 +126,7 @@ function ChatWindow({chatID, userRepo, sendWSMessage, addNewMessage, chatGroups,
             {type == "empty" && <div className='flex flex-row flex-nowrap items-center min-h-full rounded-r-my border-solid border-1 border-cadet_gray-300'>
                 <h2 className='grow font-light text-base text-center'>Select a contact or group chat to get started</h2>
             </div>}
-            <AddNewChatModal open={addingChat} setOpen={setAddingChat} chatGroups={chatGroups} chatGroupsUpdater={chatGroupsUpdater} sendWSMessage={sendWSMessage}/>
+            <AddNewChatModal open={addingChat} setOpen={setAddingChat} chatGroups={chatGroups} chatGroupsUpdater={chatGroupsUpdater} sendWSMessage={sendWSMessage} inputFriends={friends}/>
             <ChatWindowModal shown={false} backdrop={false} delayShow={50}>
                 <div className="flex flex-col wrap-none items-center grow">
                     <div className="border border-cadet_gray-300 rounded-my  bg-white">

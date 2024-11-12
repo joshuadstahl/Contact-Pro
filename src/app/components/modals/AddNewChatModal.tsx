@@ -12,7 +12,7 @@ import InvisibleTextBubble from "../InvisibleTextBubble";
 import ProfilePhoto from "../profilePhoto";
 
 
-export default function AddNewChatModal({open, setOpen, chatGroups, chatGroupsUpdater, sendWSMessage}: {open: boolean, setOpen: Function, chatGroups:chatRepository, chatGroupsUpdater: Function, sendWSMessage: Function}) {
+export default function AddNewChatModal({open, setOpen, chatGroups, chatGroupsUpdater, sendWSMessage, inputFriends}: {open: boolean, setOpen: Function, chatGroups:chatRepository, chatGroupsUpdater: Function, sendWSMessage: Function, inputFriends: Array<string>}) {
 
     interface friendSearchItem {
         name: string,
@@ -21,14 +21,31 @@ export default function AddNewChatModal({open, setOpen, chatGroups, chatGroupsUp
         photo: string
     }
 
+    //get contexts
+    const currUser = useContext(CurrentUserContext);
+    const userRepo = useContext(UserRepositoryContext);
 
-    let initialFriends : Array<friendSearchItem> = [ 
-        {name: "Joshua Stahl", username: "Joshstahl", _id:"66fda6234d3a1046d0924c75", photo:"https://lh3.googleusercontent.com/a/ACg8ocJfvuh7JYq8VlJojP2VaQ2KPpxq24jBWLyWScT_i_4CH86Y1kc0=s96-c"}, 
-        {name: "Jakin Stahl", username: "jcstahl", _id:"555", photo:"https://lh3.googleusercontent.com/a/ACg8ocJfvuh7JYq8VlJojP2VaQ2KPpxq24jBWLyWScT_i_4CH86Y1kc0=s96-c"},
-        {name: "Happy Guy", username: "DrabOyster850", _id:"672f7204fb87006681065271", photo:"https://lh3.googleusercontent.com/a/ACg8ocJfvuh7JYq8VlJojP2VaQ2KPpxq24jBWLyWScT_i_4CH86Y1kc0=s96-c"}
-    ];
+    // let searchableFriends : Array<friendSearchItem> = [ 
+    //     {name: "Joshua Stahl", username: "Joshstahl", _id:"66fda6234d3a1046d0924c75", photo:"https://lh3.googleusercontent.com/a/ACg8ocJfvuh7JYq8VlJojP2VaQ2KPpxq24jBWLyWScT_i_4CH86Y1kc0=s96-c"}, 
+    //     {name: "Jakin Stahl", username: "jcstahl", _id:"555", photo:"https://lh3.googleusercontent.com/a/ACg8ocJfvuh7JYq8VlJojP2VaQ2KPpxq24jBWLyWScT_i_4CH86Y1kc0=s96-c"},
+    //     {name: "Happy Guy", username: "DrabOyster850", _id:"672f7204fb87006681065271", photo:"https://lh3.googleusercontent.com/a/ACg8ocJfvuh7JYq8VlJojP2VaQ2KPpxq24jBWLyWScT_i_4CH86Y1kc0=s96-c"}
+    // ];
 
-    const [friends, setFriends] = useState([...initialFriends]);
+    //create a array of friend search items (if necessary)
+    let searchableFriends : Array<friendSearchItem> = [];
+    for (let i = 0; i < inputFriends.length; i++) {
+        if (inputFriends[i] in userRepo) {
+            let user = userRepo[inputFriends[i]];
+            searchableFriends.push({
+                name: user.name,
+                username: user.username,
+                _id: user._id,
+                photo: user.photo
+            });
+        }
+    }
+
+    const [friends, setFriends] = useState([...searchableFriends]);
     const [friendSearchText, setFriendSearchText] = useState("");
     const [filteredFriends, setFilteredFriends] = useState(friends);
     const [newGroupMembers, setNewGroupMembers] = useState(new Array<friendSearchItem>);
@@ -37,8 +54,7 @@ export default function AddNewChatModal({open, setOpen, chatGroups, chatGroupsUp
     const [errorDisplayed, setErrorDisplayed] = useState(false); //if an error is shown or not
     const [onErrorText, setOnErrorText] = useState(""); //the error text shown, if shown
     const [chatName, setChatName] = useState(""); //the name of the new chat
-    const currUser = useContext(CurrentUserContext);
-    const userRepo = useContext(UserRepositoryContext);
+    
 
 
     function addNewChatModalTextChange(e: ChangeEvent<HTMLInputElement>) {
@@ -141,7 +157,7 @@ export default function AddNewChatModal({open, setOpen, chatGroups, chatGroupsUp
         // setFilteredFriends(friends);
         setNewGroupMembers(copy);
         if (copy.length == 0) {
-            setFriends(initialFriends);
+            setFriends(searchableFriends);
         }
 
         //reset any error message
@@ -192,7 +208,7 @@ export default function AddNewChatModal({open, setOpen, chatGroups, chatGroupsUp
                 setCreatingChat(false); //set the button to not be submitting
                 setNewGroupMembers(new Array<friendSearchItem>); //reset the new group members field
                 setChatName(""); //reset the chat name field.
-                setFriends([...initialFriends]) //reset the friends list.
+                setFriends([...searchableFriends]) //reset the friends list.
             }
             else {
                 setOnErrorText("Unable to create chat"); //set the error text

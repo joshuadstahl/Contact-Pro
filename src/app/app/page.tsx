@@ -599,7 +599,7 @@ export default function App() {
                     <div className="flex flex-row gap-2.5 h-full max-h-full overflow-hidden leading-none">
                         <Sidebar chats={chatGroups} selectedChatID={selectedChatID} selectedChatToggler={selectedChatToggler} addingChat={addingChat} setAddingChat={setAddingChat}/>
                         <ChatWindow chatGroups={chatGroups} chatGroupsUpdater={chatGroupsUpdater} addNewMessage={addNewMessage} sendWSMessage={sendWSMessage} 
-                        chatID={selectedChatID} userRepo={userRepo} oldestUnreadMessageID={oldestUnreadMessageID} addingChat={addingChat} setAddingChat={setAddingChat}/>
+                        chatID={selectedChatID} userRepo={userRepo} oldestUnreadMessageID={oldestUnreadMessageID} addingChat={addingChat} setAddingChat={setAddingChat} friends={friends}/>
                     </div>
                 </CurrentUserContext.Provider>
             </UserRepositoryContext.Provider>
