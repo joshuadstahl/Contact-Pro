@@ -1,24 +1,13 @@
-import { User, userStatus } from "@/app/classes/user";
 import { auth } from "@/auth";
-import {Collection, Db, MongoClient, ObjectId } from "mongodb";
+import {Collection, Db, MongoClient} from "mongodb";
 import { NextResponse } from "next/server";
 import { ServerUser } from "@/app/classes/serverUser";
-import { createHash, randomInt } from "crypto";
-
-
-interface wsLogin {
-    hash: string;
-    userID: string;
-    exp: Date|string;
-    rand: number;
-}
+import { CreateDbConnection, GetOrCreateWSAuthToken } from "@/app/components/util/serverFunctions";
 
 export const GET = auth(async function GET(req) {
     if (req.auth) {
         let session = req.auth;
-        const client: MongoClient = new MongoClient(process.env.DB_CONN_STRING ?? "");
-        await client.connect();
-        const db: Db = client.db(process.env.DB_NAME ?? "");
+        const [db, client]: [Db, MongoClient] = await CreateDbConnection();
 
         const userCollection: Collection = db.collection("users");
 
@@ -28,35 +17,12 @@ export const GET = auth(async function GET(req) {
             return NextResponse.json({ message: "No account" }, { status: 403 })
         }
 
-        const wsAuthCollection: Collection = db.collection("ws_auth");
-
-        let currAuth = await wsAuthCollection.findOne<wsLogin>({userID: user._id});
-
-        let newAuth : wsLogin;
-        if (currAuth !== null) {
-            newAuth = currAuth;
-        }
-        else {
-            //create a new wsLogin object to insert into the database
-            newAuth = {
-                hash: "",
-                userID: user._id.toString(),
-                exp: new Date(new Date().getTime() + 60000 * 5),
-                rand: randomInt(1, 60000)
-            }
-            let ip = req.headers.get("x-forwarded-for") ?? "invalid";
-            if (ip == "::ffff:127.0.0.1" || ip == "::1") {
-                ip = "localhost";
-            }
-            newAuth.hash = createHash('sha256').update(newAuth.exp.toString() + ip + newAuth.userID + newAuth.rand).digest("hex").toString();
-            await wsAuthCollection.insertOne(newAuth);
-        }
+        let authHash = await GetOrCreateWSAuthToken(db, user._id.toString(), req.headers.get("x-forwarded-for"));
 
         let out = {
-            hash: newAuth.hash,
+            hash: authHash,
             addr: process.env.WS_CONNECT_ADDR
-        };
-        
+        }
 
         client.close();
 

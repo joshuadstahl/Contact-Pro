@@ -271,6 +271,7 @@ wss.on('connection', async function connection(ws: WebSocket, request) {
 
 	const wsAuthCollection: Collection<wsLogin> = db.collection<wsLogin>("ws_auth");
 
+	console.log(userkey);
 
 	let auth = await wsAuthCollection.findOne({hash: userkey});
 	
@@ -286,6 +287,7 @@ wss.on('connection', async function connection(ws: WebSocket, request) {
 		}
 		let newHash = createHash('sha256').update(auth.exp.toString() + ip + auth.userID + auth.rand).digest("hex").toString();
 
+		console.log(ip);
 		if (auth.hash != newHash) {
 			handleClose("Unauthorized", 1000);
 		}
@@ -419,72 +421,46 @@ wss.on('connection', async function connection(ws: WebSocket, request) {
 						
 						break;
 					case "message":
-						if (msg.data !== undefined) {
-							let _id = msg.data._id !== undefined ? msg.data._id : "";
-							try {
-								let newM = new incomingNewMessage({...msg.data, currUserID:currUserID});
-								let verified = await newM.verify(currUserID, db);
-								if (verified) {
-									let newID = await newM.submit(db);
-									if (newID !== false) {
-										ws.send(JSON.stringify({"msgType":"messageCreated", data: {newid: newID, oldid: newM._id}}));
-										ws.send(JSON.stringify({"msgType":"messageUpdate", data: {_id: newID, status:2}})); //communicate that the message has been received (status changed)
-									}
-									else {
-										ws.send(JSON.stringify({"msgType":"messageCreationFailed", data: {_id: newM._id}}));
-									}
+						if (msg.data !== undefined && currUserID == "HTTPAPI-CLIENT") {
 
-									newM.chat?.members.forEach(client => {
-										//if the current client(member) is online, send the new message to the client
-										if (client in clients) {
-											clients[client].forEach(clientWS => {
-												
-												let out = {
-													msgType: "message",
-													data: {
-														_id: newID,
-														chatID: newM.chatID,
-														message: newM.message,
-														messageData: newM.messageData,
-														messageType: newM.messageType,
-														sender: newM.sender,
-														timestamp: newM.timestamp,
-														read: false,
-														received: false,
-														status: 0
-													}
-												}
+							let members = msg.data.members;
 
-												//if the client is the same as the current user ID,
-												//make sure you send different information (e.g read=true)
-												if (client == currUserID) {
-													//if the client WS is not the same as the current websocket
-													if (clientWS != ws) {
-														out.data.read = true;
-														out.data.received = true;
-														out.data.status = 0;
-														clientWS.send(JSON.stringify(out));
-													}
-												}
-												else {
-													//if the client WS is not the same as the current websocket
-													if (clientWS != ws) {
-														clientWS.send(JSON.stringify(out));
-													}
-												}
-												
-											})
+							members.forEach((client: string) => {
+								//if the current client(member) is online, send the new message to the client
+								if (client in clients) {
+									clients[client].forEach(clientWS => {
+										
+										let out = {
+											msgType: "message",
+											data: {
+												...msg.data,
+												read: false,
+												received: false,
+												status: 0
+											}
 										}
-									});
 
+										//if the client is the same as the current user ID,
+										//make sure you send different information (e.g read=true)
+										if (client == currUserID) {
+											//if the client WS is not the same as the current websocket
+											if (clientWS != ws) {
+												out.data.read = true;
+												out.data.received = true;
+												out.data.status = 0;
+												clientWS.send(JSON.stringify(out));
+											}
+										}
+										else {
+											//if the client WS is not the same as the current websocket
+											if (clientWS != ws) {
+												clientWS.send(JSON.stringify(out));
+											}
+										}
+										
+									})
 								}
-								else {
-									ws.send(JSON.stringify({"msgType":"messageCreationFailed", data: {_id: newM._id}}));
-								}
-							} 
-							catch (err) {
-								ws.send(JSON.stringify({"msgType":"messageCreationFailed", data: {_id: _id}}));
-							}
+							});
 						}
 						break;
 					case "newChat":
@@ -668,8 +644,11 @@ wss.on('connection', async function connection(ws: WebSocket, request) {
 						userSubs[userSub].splice(userSubs[userSub].indexOf(currUserID), 1);
 					}
 				})
-				//tell all the other subs that the user is offline
-				await statusUpdate(0); //0 is offline
+				//tell all the other subs that the user is offline, as long as 
+				//the current user isn't the api
+				if (currUserID != "HTTPAPI-CLIENT") {
+					await statusUpdate(0); //0 is offline
+				}
 			}
 			//if there are more than one client for a username, only remove the websocket for the current connection
 			else {

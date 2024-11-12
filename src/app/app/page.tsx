@@ -198,9 +198,43 @@ export default function App() {
 						if (selectedChatID == data.chatID && document.hasFocus()) {
 							read = true;
 						}
-						
-						addNewMessage(new Message({message: data.message, _id: data._id, sender: userRepo[data.sender], timestamp: new Date(data.timestamp), status: data.status, read:read, received: true}), data.chatID);
-						sendWSMessage({msgType: "messageUpdate", data: {_id: data._id, received: true, read: read}});
+
+                        //make sure the chat is in the chat groups repository
+                        if (data.chatID in chatGroupsRef.current) {
+
+                            //if the message id (old or not) already exists in the current chat, we want to update the message 
+                            //to the new id. Otherwise, add it up!
+
+                            let oldIDActive = false; //if the old (temporary) message is still active in a message.
+
+                            let existantMessage = chatGroupsRef.current[data.chatID].messages.find((msg) => {
+                                if (msg.msgID == data.oldID) {
+                                    oldIDActive = true;
+                                    return msg;
+                                }
+                                else if (msg.msgID == data._id) {
+                                    return msg;
+                                }
+                            })
+
+                            if (existantMessage === undefined) {
+                                console.log("triggered!!!");
+                                addNewMessage(new Message({message: data.message, _id: data._id, sender: userRepo[data.sender], timestamp: new Date(data.timestamp), status: data.status, read:read, received: true}), data.chatID);
+                                sendWSMessage({msgType: "messageUpdate", data: {_id: data._id, received: true, read: read}});
+                            }
+                            else if (oldIDActive) {
+                                //update existing message (if necessary)
+                                let copy = {...chatGroupsRef.current};
+                                for (let i = 0; i < copy[data.chatID].messages.length; i++) {
+                                    let currMsg = copy[data.chatID].messages[i];
+                                    if (currMsg.msgID == data.oldID) {
+                                        currMsg.msgID = data._id;
+                                        break;
+                                    }
+                                }
+                                setChatGroups(copy);
+                            }
+                        }                 
 					}
 				}
 			}
@@ -236,7 +270,6 @@ export default function App() {
 						})
 						chatGroupsUpdater(copy); //update the chat groups
 				}
-				
 			}
 			else if (body.msgType == "messageCreationFailed") {
 				if (body.data !== undefined) {

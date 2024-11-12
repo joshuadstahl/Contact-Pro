@@ -45,7 +45,7 @@ function ChatWindow({chatID, userRepo, sendWSMessage, addNewMessage, chatGroups,
         type = "empty";
     }
 
-    function sendMessage() {
+    async function sendMessage() {
         let messageField = document.getElementById("messageField");
         let message = messageField?.textContent ?? "blank message";
         if (message != "") {
@@ -63,8 +63,20 @@ function ChatWindow({chatID, userRepo, sendWSMessage, addNewMessage, chatGroups,
                 messageField.textContent = "";
             }
             let data = out.data;
-            sendWSMessage(out);
-            addNewMessage(new MessageClass({...data, sender: userRepo[currUser], timestamp: new Date(), read: true, received:true, status:0}), chat.chatID);
+
+            // sendWSMessage(out);
+            try {
+                addNewMessage(new MessageClass({...data, sender: userRepo[currUser], timestamp: new Date(), read: true, received:true, status:0}), chat.chatID);
+                let res = await fetch("/api/message", {method: "POST", body: JSON.stringify(data)});
+                if (res.ok) {
+                    
+                }
+            }
+            catch (err) {
+                console.log(err);
+            }
+
+            
         }
     }
 
