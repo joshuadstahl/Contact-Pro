@@ -21,28 +21,6 @@ const wss = new WebSocketServer({
 	clientTracking: true
 });
 
-
-//class to keep track of a client websocket pair.
-class clientSocketPair {
-	constructor(id:string, ws:WebSocket) {
-		this.id = id;
-		this.ws = new Array<WebSocket>(...[ws]);
-	}
-	public id: string;
-	public ws: Array<WebSocket>;
-}
-
-//class to keep track of which users are subscribed to which users updates.
-class userUpdateSub {
-
-	constructor(username: string) {
-		this.username = username;
-	}
-
-	public username: string;
-	public subscribers = new Array<clientSocketPair>;
-}
-
 interface wsLogin {
 	hash: string;
 	userID: string;
@@ -119,98 +97,6 @@ class outgoingNewMessage {
     }
 }
 
-class incomingNewMessage {
-	constructor({_id, chatID, message, messageData, messageType, currUserID} : {_id:string, chatID:string, message:string, messageData:string, messageType: number, currUserID: string}) {
-		this._id = _id;
-		this.chatID = chatID;
-		this.message = message;
-		this.messageData = messageData;
-		this.messageType = messageType;
-		this.sender = currUserID;
-	}
-
-	public _id: string;
-	public chatID: string;
-	public message: string;
-	public messageData: string;
-	public messageType: number;
-	public sender: string;
-	public timestamp: string = new Date().toString();
-	public chat?: dbRawChat;
-	public recipientStatuses: {
-		[username: string]: {
-			"0queued": string | null;
-			"1sending": string | null;
-			"2sent": string | null;
-			"3delivered": string | null;
-			"4read": string | null;
-		}
-	} = {};
-
-	public async verify(currUserID: string, db:Db) {
-		//verify the chat ID and that the current user is a part of that chat
-		const chatCollection = db.collection<dbRawChat>("chats_raw");
-		const chat = await chatCollection.findOne<dbRawChat>({_id: new ObjectId(this.chatID)})
-
-		if (chat !== null) {
-
-			//convert members list from objectIDs to strings
-			let stringMembers = chat.members.map((mbr) => {
-				return mbr.toString();
-			})
-			//if the current user is a part of this chat, verification complete!
-			if (stringMembers.indexOf(currUserID) != -1) {
-				this.chat = chat;
-				return true;
-			}
-			else { //user is not a member of the chat, so return false.
-				return false;
-			}
-		}
-		else {
-			return false; //no document returned, so return false
-		}
-	}
-
-	public async submit(db: Db) {
-
-		//as long as the chat is not undefined (verification not done or failed)
-		if (this.chat !== undefined) {
-			this.chat.members.forEach((mbr) => {
-				this.recipientStatuses[mbr] = {
-					"0queued": this.timestamp.toString(),
-					"1sending": this.timestamp.toString(),
-					"2sent": this.timestamp.toString(),
-					"3delivered": null,
-					"4read": null
-				}
-			})
-			const msgCollection = db.collection<dbRawMessage>("messages_raw");
-			const res = await msgCollection.insertOne(
-				{
-					_id: undefined, 
-					chatID: new ObjectId(this.chatID),
-					sender: new ObjectId(this.sender),
-					message: this.message,
-					messageData: this.messageData,
-					messageType: this.messageType,
-					timestamp: new Date(this.timestamp),
-					recipientStatuses: this.recipientStatuses
-				}
-			);
-
-			if (res.acknowledged) {
-				return res.insertedId; //return the id of the inserted document
-			}
-			else {
-				return false; //failed somehow, so return false
-			}
-		}
-		else {
-			return false; //no verification, so return false
-		}  
-	}
-}
 
 function getMostRecentStatus(msg: dbRawMessage) {
 	if (Object.keys(msg.recipientStatuses).length == 1) {
@@ -421,6 +307,7 @@ wss.on('connection', async function connection(ws: WebSocket, request) {
 						
 						break;
 					case "message":
+						//only allow this type of message from the HTTP API
 						if (msg.data !== undefined && currUserID == "HTTPAPI-CLIENT") {
 
 							let members = msg.data.members;
@@ -621,16 +508,7 @@ wss.on('connection', async function connection(ws: WebSocket, request) {
 			handleClose("Unknown error occurred", 1011);
 		}
 		
-		
-		// console.log('received: %s', data);
 	});
-
-	//ws.send('something');
-
-	// console.log(wss.clients.size);
-	// console.log(wss.clients);
-
-
 
 	ws.on('close', async (x, reason) => {
 		

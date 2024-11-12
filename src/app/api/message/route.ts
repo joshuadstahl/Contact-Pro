@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/auth";
-import { MongoClient, Db, Collection, ObjectId } from "mongodb";
+import { Db, Collection, ObjectId } from "mongodb";
 import { ServerUser } from "@/app/classes/serverUser";
-import { randomUsername } from "@/app/components/util/functions";
 import { CreateDbConnection, sendWSMessage } from "@/app/components/util/serverFunctions";
 import { iRecipientStatuses } from "@/app/classes/serverMessage";
 
@@ -142,6 +141,7 @@ export const POST = async function(req: Request) {
                         let verified = await newM.verify(currUserID, db);
                         if (verified) {
                             let newID = await newM.submit(db);
+							client.close();
                             if (newID !== false) {
                                 let res = await sendWSMessage({msgType: "message", data: {
 									_id: newID,
@@ -154,9 +154,6 @@ export const POST = async function(req: Request) {
 									timestamp: newM.timestamp,
 									members: newM.chat?.members ?? []
 								}});
-                                
-                                // ws.send(JSON.stringify({"msgType":"messageCreated", data: {newid: newID, oldid: newM._id}}));
-                                // ws.send(JSON.stringify({"msgType":"messageUpdate", data: {_id: newID, status:2}})); //communicate that the message has been received (status changed)
 
 								return NextResponse.json({ message: "Successfully created message.", data: {_id: newID}}, { status: 201 });
                             }
@@ -177,18 +174,6 @@ export const POST = async function(req: Request) {
                     return NextResponse.json({ message: "Unable to retrieve current user."}, { status: 500 });
                 }
 
-                //create the group in the database and return the information
-                // const chatsRawCollection: Collection = db.collection("chats_raw");
-                // let res = await chatsRawCollection.insertOne({chatType: chatType, members: convMembers, photo: "", name: chatName, owner: new ObjectId(user._id.toString()), chatCreationNotified: false, timestamp: new Date()})
-
-                // let out = {
-                //     chatID: res.insertedId,
-                //     name: chatName
-                // }
-
-                client.close();
-
-                //return NextResponse.json(out, { status: 200 });
             }
         }
     } catch (err) {
