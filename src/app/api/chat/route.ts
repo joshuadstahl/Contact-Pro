@@ -59,9 +59,10 @@ export const POST = async function(req: Request) {
                     let chatType = 'group';
                     if (body.members.length == 1) {
                         chatType = "user"
-                        //add the current user to the chat too
-                        body.members.push(user._id.toString());
                     }
+                    
+                    //add the current user to the chat too
+                    body.members.push(user._id.toString());
                     
                     console.log(body.members)
 
