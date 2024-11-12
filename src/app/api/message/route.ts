@@ -80,7 +80,7 @@ class incomingNewMessage {
 		}
 	}
 
-	public async submit(db: Db) {
+	public async submit(currUserID: string, db: Db) {
 
 		//as long as the chat is not undefined (verification not done or failed)
 		if (this.chat !== undefined) {
@@ -91,6 +91,11 @@ class incomingNewMessage {
 					"2sent": this.timestamp.toString(),
 					"3delivered": null,
 					"4read": null
+				}
+
+				if (currUserID == mbr) {
+					this.recipientStatuses[mbr]["3delivered"] = this.timestamp.toString();
+					this.recipientStatuses[mbr]["4read"] = this.timestamp.toString();
 				}
 			})
 			const msgCollection = db.collection<dbRawMessage>("messages_raw");
@@ -140,7 +145,7 @@ export const POST = async function(req: Request) {
                         let newM = new incomingNewMessage({...body, currUserID:currUserID});
                         let verified = await newM.verify(currUserID, db);
                         if (verified) {
-                            let newID = await newM.submit(db);
+                            let newID = await newM.submit(currUserID, db);
 							client.close();
                             if (newID !== false) {
                                 let res = await sendWSMessage({msgType: "message", data: {

@@ -129,15 +129,19 @@ function getMostRecentStatus(msg: dbRawMessage) {
 			//loop through each of the possible keys(status items) in the array
 			for (let i = 0; i < userKeys2.length; i++) {
 				//if the current key in the values d
-				if (userData[userKeys2[i] as objectKey] !== null) lastValidStatus = i;
-				else break;
+				if (userData[userKeys2[i] as objectKey] !== null) {
+					lastValidStatus = i;
+				}
+				else {
+					break;
+				}
 			}
 			maxStatus.push(lastValidStatus);
 		});
 
-		maxStatus = maxStatus.sort();
+		maxStatus = maxStatus.sort(); //sort will sort in ascending order.
 
-		return (maxStatus[maxStatus.length - 1] as msgStatusEnum);  
+		return (maxStatus[0] as msgStatusEnum);  //return the lowest message status available.
 	}
 	
 }
@@ -157,8 +161,6 @@ wss.on('connection', async function connection(ws: WebSocket, request) {
 
 	const wsAuthCollection: Collection<wsLogin> = db.collection<wsLogin>("ws_auth");
 
-	console.log(userkey);
-
 	let auth = await wsAuthCollection.findOne({hash: userkey});
 	
 	let currUserID = ""; //the current user ID for the client signed in.
@@ -173,7 +175,6 @@ wss.on('connection', async function connection(ws: WebSocket, request) {
 		}
 		let newHash = createHash('sha256').update(auth.exp.toString() + ip + auth.userID + auth.rand).digest("hex").toString();
 
-		console.log(ip);
 		if (auth.hash != newHash) {
 			handleClose("Unauthorized", 1000);
 		}
