@@ -7,7 +7,7 @@ import NewMessageSeperator from "./newMessageSeperator";
 import { useEffect } from "react";
 
 //takes in a Chat object, and the id of the oldest unread message (if applicable)
-export default function MessageDisplayWrapper({chat, unreadMessagesStartID} : {chat: Chat, unreadMessagesStartID: string}) {
+export default function MessageDisplayWrapper({chat, unreadMessagesStartID, messageResendCallback} : {chat: Chat, unreadMessagesStartID: string, messageResendCallback: (msg: MessageC) => {}}) {
 
     let lastDate = ""; //the date of the last message processed
     let lastSender = ""; //the sender of the last message processed
@@ -61,7 +61,7 @@ export default function MessageDisplayWrapper({chat, unreadMessagesStartID} : {c
                         <div key={x.timestamp.getMilliseconds() + x.msgID}>
                             <MessageDaySeperator day={GetFancyDate(x.timestamp)}/>
                             {printNewMessageSep && <NewMessageSeperator/>}
-                            <Message key={x.msgID + chat.chatID} theMessage={x} type={msgDisplayType.NEW}/>
+                            <Message key={x.msgID + chat.chatID} theMessage={x} type={msgDisplayType.NEW} messageResendCallback={messageResendCallback}/>
                         </div>
                     )
                 }
@@ -71,14 +71,14 @@ export default function MessageDisplayWrapper({chat, unreadMessagesStartID} : {c
                         return (
                         <div key={x.timestamp.getMilliseconds() + x.msgID}>
                             {printNewMessageSep && <NewMessageSeperator/>}
-                            <Message key={x.msgID + chat.chatID} theMessage={x} type={msgDisplayType.NEW}/>
+                            <Message key={x.msgID + chat.chatID} theMessage={x} type={msgDisplayType.NEW} messageResendCallback={messageResendCallback}/>
                         </div>)
                     }
                     else {
                         return (
                         <div key={x.timestamp.getMilliseconds() + x.msgID}>
                             {printNewMessageSep && <NewMessageSeperator/>}
-                            <Message key={x.msgID + chat.chatID} theMessage={x} type={msgDisplayType.CONT}/>
+                            <Message key={x.msgID + chat.chatID} theMessage={x} type={msgDisplayType.CONT} messageResendCallback={messageResendCallback}/>
                         </div>)
                     }
                 }

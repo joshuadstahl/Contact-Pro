@@ -7,11 +7,15 @@ import { UserRepositoryContext } from "../context/userRepositoryContext";
 import { GetFancyDate } from "../util/functions";
 
 
-export default function Message({theMessage, type} : {theMessage: MessageClass, type: msgDisplayType}) {
+export default function Message({theMessage, type, messageResendCallback} : {theMessage: MessageClass, type: msgDisplayType, messageResendCallback: (msg: MessageClass) => {}}) {
     
     const currUser = useContext(CurrentUserContext);
     const userRepo = useContext(UserRepositoryContext);
     let msgFromUser = theMessage.sender._id == currUser;
+
+    function callback () {
+        messageResendCallback(theMessage);
+    }
 
     return ((type == msgDisplayType.NEW && 
 
@@ -25,8 +29,8 @@ export default function Message({theMessage, type} : {theMessage: MessageClass, 
                     }</p>
                 </div>
                 <div className="flex flex-row flex-nowrap items-center">
-                    <p className="font-light text-sm text-charcoal-950 leading-4 mt-0.5 msgText border-r pr-2.5">{theMessage.message}</p>
-                    <MsgStatus timestamp={theMessage.timestamp} msgStatus={theMessage.status} msgFromUser={msgFromUser}/>
+                    <p className={"font-light text-sm leading-4 mt-0.5 msgText border-r pr-2.5" + (theMessage.failedSent ? " text-do_not_disturb" : " text-charcoal-950")}>{theMessage.message}</p>
+                    <MsgStatus timestamp={theMessage.timestamp} msgStatus={theMessage.status} msgFromUser={msgFromUser} failedSend={theMessage.failedSent} resendCallback={callback}/>
                 </div>
             </div>
         </div>
@@ -34,8 +38,8 @@ export default function Message({theMessage, type} : {theMessage: MessageClass, 
     ) || 
     ( 
         <div id={theMessage.msgID} className="flex flex-row flex-nowrap items-center msg ml-12">
-            <p className="font-light text-sm text-charcoal-950 leading-4 mt-0.5 msgText border-french_gray-400 pr-2.5">{theMessage.message}</p>
-            <MsgStatus timestamp={theMessage.timestamp} msgStatus={theMessage.status} msgFromUser={msgFromUser}/>
+            <p className={"font-light text-sm leading-4 mt-0.5 msgText border-french_gray-400 pr-2.5" + (theMessage.failedSent ? " text-do_not_disturb" : " text-charcoal-950")}>{theMessage.message}</p>
+            <MsgStatus timestamp={theMessage.timestamp} msgStatus={theMessage.status} msgFromUser={msgFromUser} failedSend={theMessage.failedSent} resendCallback={callback}/>
         </div>
     ))
 }

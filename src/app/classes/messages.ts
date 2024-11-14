@@ -28,8 +28,8 @@ export enum msgType {
 
 export class Message {
 
-    constructor({message, _id, sender, timestamp, status = undefined, read, received} : 
-        {message: string, _id: string|ObjectId, sender: User, timestamp: Date | string, status?: msgStatusEnum | undefined, read: boolean, received: boolean}) {
+    constructor({message, _id, sender, timestamp, status = undefined, read, received, failedSent = false} : 
+        {message: string, _id: string|ObjectId, sender: User, timestamp: Date | string, status?: msgStatusEnum | undefined, read: boolean, received: boolean, failedSent?: boolean}) {
         this.message = message;
         this.sender = sender;
         this.timestamp = typeof timestamp  == "string" ? new Date(timestamp) : timestamp;
@@ -37,6 +37,7 @@ export class Message {
         this.read = read;
         this.received = received;
         this.msgID = _id.toString();
+        this.failedSent = failedSent;
     }
 
     public message = ""; //every type of message can have a text message to go along with it
@@ -48,6 +49,7 @@ export class Message {
     public received = false;
     public read = false;
     public msgID = "";
+    public failedSent = false;
 
 }
 

@@ -175,8 +175,14 @@ const config: Config = {
       'large': '12px',
       'my':'0.625rem',
       '5px':'0.3125rem'
+    },
+    extend: {
+      fontSize: {
+        xxs: "0.625rem"
+      }
     }
   },
+  
   plugins: [],
 };
 export default config;

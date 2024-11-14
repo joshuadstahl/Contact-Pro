@@ -45,7 +45,51 @@ function ChatWindow({chatID, userRepo, sendWSMessage, addNewMessage, chatGroups,
         type = "empty";
     }
 
-    async function sendMessage() {
+    async function updateMsgErrorStatus(messageID: string, chatID: string, newErrorStatus: boolean) {
+        if (chatID in chatGroups) {
+            let copy = {...chatGroups};
+            //find the message in the chat group and update it.
+            for (let i = 0; i < copy[chatID].messages.length; i++) {
+                let currMessage = copy[chatID].messages[i];
+                if (currMessage.msgID == messageID) {
+                    currMessage.failedSent = newErrorStatus;
+                    console.log("found message");
+                    break;
+                }
+            }
+            chatGroupsUpdater(copy); //update the chat groups (and the message too)
+        }
+    }
+
+    async function sendMessage(data: object): Promise<boolean> {
+        return new Promise<boolean>(async (resolve, reject) => {
+            try {
+                let res = await fetch("/api/message", {method: "POST", body: JSON.stringify(data)});
+                return resolve(res.ok);
+            } catch (err) {
+                console.log("The message sending error:", err);
+                resolve(false);
+            }
+        })
+        
+    }
+
+    async function resendMessageCallback(msg: MessageClass) {
+        let out = {
+            _id: msg.msgID,
+            chatID: chat.chatID, 
+            message: msg.message,
+            messageData: msg.messageData, 
+            messageType: msg.messageType
+        }
+        updateMsgErrorStatus(msg.msgID, chat.chatID , false); //set the error status to false so the resend button doesn't get spammed.
+        let success = await sendMessage(out);
+        if (!success) {
+            updateMsgErrorStatus(msg.msgID, chat.chatID , true);
+        }
+    }
+
+    async function eventSendMessage() {
         let messageField = document.getElementById("messageField");
         let message = messageField?.textContent ?? "blank message";
         if (message != "") {
@@ -64,26 +108,21 @@ function ChatWindow({chatID, userRepo, sendWSMessage, addNewMessage, chatGroups,
             }
             let data = out.data;
 
-            // sendWSMessage(out);
-            try {
-                addNewMessage(new MessageClass({...data, sender: userRepo[currUser], timestamp: new Date(), read: true, received:true, status:0}), chat.chatID);
-                let res = await fetch("/api/message", {method: "POST", body: JSON.stringify(data)});
-                if (res.ok) {
-                    
-                }
-            }
-            catch (err) {
-                console.log(err);
-            }
+            addNewMessage(new MessageClass({...data, sender: userRepo[currUser], timestamp: new Date(), read: true, received:true, status:0}), chat.chatID);
+            let success = await sendMessage(data);
 
-            
+            //if unable to send the message, set the message's error status to true
+            if (!success) {
+                console.log("setting message to error erorr");
+                updateMsgErrorStatus(data._id, data.chatID, true);
+            }
         }
     }
 
     function textFieldKeyDown(evt: KeyboardEvent) {
         if (evt.key == "Enter" && evt.shiftKey == false) {
             evt.preventDefault();
-            sendMessage();
+            eventSendMessage();
         }
     }
 
@@ -103,7 +142,7 @@ function ChatWindow({chatID, userRepo, sendWSMessage, addNewMessage, chatGroups,
             
                 <div className="grow flex flex-col flex-initial max-w-full max-h-full overflow-x-hidden overflow-y-auto">
                     <div className='mb-5 grow overflow-y-auto custom_scrollbars'>
-                        <MessageDisplayWrapper chat={chat} unreadMessagesStartID={oldestUnreadMessageID}/>
+                        <MessageDisplayWrapper chat={chat} unreadMessagesStartID={oldestUnreadMessageID} messageResendCallback={resendMessageCallback}/>
                     </div>
                     <div key={chat.chatID + "msgBar"} className='relative flex flex-row outline-none border-solid border-1 border-cadet_gray-200 rounded-my py-2.5 px-5
                         bg-white text-light text-xs overflow-x-hidden wrap-none items-center shrink-0'>
@@ -118,7 +157,7 @@ function ChatWindow({chatID, userRepo, sendWSMessage, addNewMessage, chatGroups,
                             </div>
                         }
                         <div className='shrink-0 ml-2.5' style={{maxWidth: "15px", maxHeight:"15px"}}>
-                            <button onClick={sendMessage}><i className="bi bi-send stroke-1 text-charcoal"></i></button>
+                            <button onClick={eventSendMessage}><i className="bi bi-send stroke-1 text-charcoal"></i></button>
                         </div>
                     </div>
                 </div>

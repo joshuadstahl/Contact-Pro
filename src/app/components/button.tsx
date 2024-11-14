@@ -3,9 +3,11 @@ import { MouseEventHandler, useState } from "react";
 
 export default function Button({text = "this is button text", colorStyling, color, outline = false, size = "Large", width = "auto", onClick, submissionButton = false, submissionText = "", buttonSubmissionState = undefined, disabled = false, selected = false, className = ""} : 
     {text: string, colorStyling: "Light"|"Heavy", color: "Grayscale"|"Primary"|"Secondary"|"PrimaryAlt"|"SecondaryAlt",
-        outline?: boolean, size?: "Large"|"Small", width?: "auto"|number, onClick:MouseEventHandler, submissionButton?: boolean, submissionText?: string, buttonSubmissionState?: boolean|undefined, disabled?: boolean, selected?: boolean, className?: string}) {
+        outline?: boolean, size?: "Large"|"Small"|"XS"|"XXS", width?: "auto"|number, onClick:MouseEventHandler, submissionButton?: boolean, submissionText?: string, buttonSubmissionState?: boolean|undefined, disabled?: boolean, selected?: boolean, className?: string}) {
 
-    let styling = "";
+    let styling = ""; //variable to hold styling
+
+    //handle button color and outline styling
     let whenSelectedColor = "";
     let notSelectedColor = "";
     switch (color){
@@ -88,11 +90,33 @@ export default function Button({text = "this is button text", colorStyling, colo
     }
 
     styling += colorStyling == "Light" ? " text-charcoal" : " text-white";
-    styling += size == "Large" ? " px-5 py-2.5" : " px-2.5 py-1.5";
-    styling += selected ? (" " + whenSelectedColor) : (" " + notSelectedColor);
-    styling += " rounded-5px text-sm"; 
-    styling += width != "auto" ? (" w-" + width + " min-w-" + width) : "";
+
+    //handle button sizing
+    if (size == "Large") {
+        styling += " px-5 py-2.5 text-sm"
+    }
+    else if (size == "Small") {
+        styling += " px-2.5 py-1.5 text-sm";
+    }
+    else if (size == "XS") {
+        styling += " px-2.5 py-1.5 text-xs";
+    }
+    else if (size == "XXS") {
+        styling += " px-1.5 py-0.5 text-xxs";
+    }
+
+    //handle button rounding
+    styling += " rounded-5px";
+
+    //handle button disabled status
     styling += " " + className + " disabled:opacity-80";
+
+    //handle button selected status
+    styling += selected ? (" " + whenSelectedColor) : (" " + notSelectedColor);
+    
+    //handle button width
+    styling += width != "auto" ? (" w-" + width + " min-w-" + width) : "";
+    
 
     let submitting;
     let setSubmitting;
@@ -109,7 +133,7 @@ export default function Button({text = "this is button text", colorStyling, colo
     
 
     return (
-        <div>
+        <div className="flex flex-row flex-nowrap items-center">
             <button onClick={(evt) => {
                 //if the button is a submission button, then make
                 //sure the submission function is run once.
