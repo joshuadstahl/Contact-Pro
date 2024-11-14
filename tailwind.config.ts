@@ -155,30 +155,19 @@ const config: Config = {
     fontFamily: {
       "sans": ['Heebo', 'sans-serif']
     },
-    borderWidth: {
-      'xs':'0.5px',
-      DEFAULT: '1px',
-      '0': '0',
-      '1': '1px',
-      '2': '2px',
-      '3': '3px',
-      '4': '4px',
-      '6': '6px',
-    },
-    borderRadius: {
-      'none': '0',
-      'sm': '0.125rem',
-      DEFAULT: '0.25rem',
-      'md': '0.375rem',
-      'lg': '0.5rem',
-      'full': '9999px',
-      'large': '12px',
-      'my':'0.625rem',
-      '5px':'0.3125rem'
-    },
     extend: {
       fontSize: {
         xxs: "0.625rem"
+      },
+      borderRadius: {
+        'my':'0.625rem',
+        '5px':'0.3125rem'
+      },
+      borderWidth: {
+        'xs':'0.5px',
+        '1': '1px',
+        '3': '3px',
+        '6': '6px',
       }
     }
   },
