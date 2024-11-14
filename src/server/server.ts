@@ -414,24 +414,48 @@ wss.on('connection', async function connection(ws: WebSocket, request) {
 						break;
 					case "messageUpdate":
 						if (msg.data != undefined && msg.data._id != undefined) {
-							console.log("not null 1");
 							try {
 								let updates = false;
 
 								let msgID : string = msg.data._id.toString();
-								console.log(msgID);
 								const msgCollection = db.collection<dbRawMessage>("messages_raw");
 								let msgdata = await msgCollection.findOne({_id: new ObjectId(msgID)});
 
 								if (msgdata != null) {
-									console.log("not null 2");
-									if (msg.data.received != undefined) {
+									if (msg.data.received !== undefined) {
 										if (msg.data.received == true) {
-											if (msgdata.recipientStatuses != undefined && currUserID in msgdata.recipientStatuses) {
-												//if the message for the current user is not delivered, set it to delivered.
-												if (msgdata.recipientStatuses[currUserID]['3delivered'] == null) {
-													msgdata.recipientStatuses[currUserID]['3delivered'] = new Date().toString();
-													updates = true;
+											//make sure that the recipientStatuses field is defined.
+											if (msgdata.recipientStatuses !== undefined) {
+												if (currUserID in msgdata.recipientStatuses) {
+													//if the message for the current user is not delivered, set it to delivered.
+													if (msgdata.recipientStatuses[currUserID]['3delivered'] == null) {
+														msgdata.recipientStatuses[currUserID]['3delivered'] = new Date().toString();
+														updates = true;
+													}
+												}
+												else {
+													//we'll see if the user is a part of the chat or not.
+													//If so, we'll add them to the message recipient statuses
+													const chatsCollection = db.collection<dbRawChat>("chats_raw");
+													let chat = await chatsCollection.findOne({_id: new ObjectId(msgdata.chatID ?? "")});
+
+													//if the chat exists, proceed
+													if (chat !== null) {
+														//loop through the chat members to see if the current user ID is equal to any of them
+														for (let i = 0; i < chat.members.length; i++) {
+															if (currUserID == chat.members[i].toString()) {
+																msgdata.recipientStatuses[currUserID] = {
+																	"0queued": msgdata.timestamp.toString(),
+																	"1sending": msgdata.timestamp.toString(),
+																	"2sent": msgdata.timestamp.toString(),
+																	"3delivered": new Date().toString(),
+																	"4read": null
+																}
+																updates = true;
+																break;
+															}
+														}
+													}
 												}
 											}
 										}
