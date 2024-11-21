@@ -205,7 +205,7 @@ export default function App() {
                             //if the message id (old or not) already exists in the current chat, we want to update the message 
                             //to the new id. Otherwise, add it up!
 
-                            let oldIDActive = false; //if the old (temporary) message is still active in a message.
+                            let oldIDActive = false; //if the old (temporary) message is still active in a chat. (so we can update the id and status)
 
                             let existantMessage = chatGroupsRef.current[data.chatID].messages.find((msg) => {
                                 if (msg.msgID == data.oldID) {
@@ -228,7 +228,9 @@ export default function App() {
                                 for (let i = 0; i < copy[data.chatID].messages.length; i++) {
                                     let currMsg = copy[data.chatID].messages[i];
                                     if (currMsg.msgID == data.oldID) {
+                                        //update the existing message's id and status.
                                         currMsg.msgID = data._id;
+                                        currMsg.status = 2;
                                         break;
                                     }
                                 }
