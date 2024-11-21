@@ -1,12 +1,12 @@
 import { auth } from "@/auth";
 import {Collection, Db, MongoClient} from "mongodb";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { ServerUser } from "@/app/classes/serverUser";
 import { CreateDbConnection, GetOrCreateWSAuthToken } from "@/app/components/util/serverFunctions";
 
-export const GET = auth(async function GET(req) {
-    if (req.auth) {
-        let session = req.auth;
+export const GET = async function GET(req: NextRequest) {
+    let session = await auth();
+    if (session) {
         const [db, client]: [Db, MongoClient] = await CreateDbConnection();
 
         const userCollection: Collection = db.collection("users");
@@ -29,4 +29,4 @@ export const GET = auth(async function GET(req) {
         return NextResponse.json(out);
     }
     return NextResponse.json({ message: "Not authenticated" }, { status: 401 })
-})
+}

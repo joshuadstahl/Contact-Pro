@@ -1,13 +1,12 @@
 import { User, userStatus } from "@/app/classes/user";
 import { auth } from "@/auth";
 import {Collection, Db, MongoClient } from "mongodb";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
-export const PUT = auth(async function PUT(req) {
+export const PUT = async function PUT(req: NextRequest) {
     
-    
-    if (req.auth) {
-        let session = req.auth;
+    let session = await auth();
+    if (session) {
         const client: MongoClient = new MongoClient(process.env.DB_CONN_STRING ?? "");
         await client.connect();
         const db: Db = client.db(process.env.DB_NAME ?? "");
@@ -46,4 +45,4 @@ export const PUT = auth(async function PUT(req) {
 
     }
     return NextResponse.json({ message: "Not authenticated" }, { status: 401 })
-})
+}

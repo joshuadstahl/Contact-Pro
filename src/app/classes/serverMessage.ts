@@ -1,7 +1,7 @@
 import { ServerUser } from "./serverUser";
 import { Message, msgStatusEnum, msgType } from "./messages";
-import { User } from "./user";
 import { ObjectId } from "mongodb";
+import { getMostRecentStatus } from "../components/util/functions";
 
 
 export interface iRecipientStatuses {
@@ -50,47 +50,7 @@ export class ServerMessage {
     }
 
     public getMostRecentStatus() {
-        if (Object.keys(this.recipientStatuses).length == 1) {
-            let lastValidStatus = 0;
-            let userID = Object.keys(this.recipientStatuses)[0]; //get the userID
-            let userData = this.recipientStatuses[userID]; //the data for the userID
-            let userKeys2 = Object.keys(this.recipientStatuses[userID]).sort(); //the keys for the statuses under the userID
-            
-            type objectKey = keyof typeof userData; //the datatype for the keys under the userID
-
-            //loop through each of the possible keys(status items) in the array
-            for (let i = 0; i < userKeys2.length; i++) {
-                //if the current key in the values d
-                if (userData[userKeys2[i] as objectKey] !== null) lastValidStatus = i;
-                else break;
-            }
-            return (lastValidStatus as msgStatusEnum);
-        }
-        else {
-            let unameList = Object.keys(this.recipientStatuses); //get a list of recipient userIDs
-            let maxStatus = new Array<Number>; //array of the max status (most recent status) for each of the userIDs
-
-            unameList.forEach(userID => {
-                let lastValidStatus = 0;
-                let userData = this.recipientStatuses[userID]; //the data for the userID
-                let userKeys2 = Object.keys(this.recipientStatuses[userID]).sort(); //the keys for the statuses under the userID
-                
-                type objectKey = keyof typeof userData; //the datatype for the keys under the userID
-
-                //loop through each of the possible keys(status items) in the array
-                for (let i = 0; i < userKeys2.length; i++) {
-                    //if the current key in the values d
-                    if (userData[userKeys2[i] as objectKey] !== null) lastValidStatus = i;
-                    else break;
-                }
-                maxStatus.push(lastValidStatus);
-            });
-
-            maxStatus = maxStatus.sort();
-
-            return (maxStatus[maxStatus.length - 1] as msgStatusEnum);  
-        }
-        
+        return getMostRecentStatus(this.recipientStatuses);
     }
 
 }

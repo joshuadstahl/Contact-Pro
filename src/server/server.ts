@@ -3,7 +3,8 @@ import { MongoClient, Db, Collection, ObjectId } from 'mongodb';
 const dotenv = require('dotenv').config({ path: '.env.local' })
 import { createHash, randomUUID } from 'crypto';
 import {msgStatusEnum} from "../app/classes/messages";
-import {ServerMessage, iRecipientStatuses} from "../app/classes/serverMessage";
+import {ServerMessage, iRecipientStatuses} from "@/app/classes/serverMessage";
+import { getMostRecentStatus } from '@/app/components/util/functions';
 
 
 const wss = new WebSocketServer({
@@ -86,64 +87,7 @@ class outgoingNewMessage {
 			}
 		}
         
-        // if (currUserID == this.sender) {
-
-        //     return new Message({...this, status:this.getMostRecentStatus(), sender:this.sender.export(currUser), read:true});
-        // }
-        // else {
-        //     return new Message({...this, status:this.getMostRecentStatus(), sender:this.sender.export(currUser), read:(currUser in this.recipientStatuses ? this.recipientStatuses[currUser]['4read'] !== null && this.recipientStatuses[currUser]['4read'] !== undefined : false)});
-        // }
-        
     }
-}
-
-
-function getMostRecentStatus(msg: dbRawMessage) {
-	if (Object.keys(msg.recipientStatuses).length == 1) {
-		let lastValidStatus = 0;
-		let userID = Object.keys(msg.recipientStatuses)[0]; //get the userID
-		let userData = msg.recipientStatuses[userID]; //the data for the userID
-		let userKeys2 = Object.keys(msg.recipientStatuses[userID]).sort(); //the keys for the statuses under the userID
-		
-		type objectKey = keyof typeof userData; //the datatype for the keys under the userID
-
-		//loop through each of the possible keys(status items) in the array
-		for (let i = 0; i < userKeys2.length; i++) {
-			//if the current key in the values d
-			if (userData[userKeys2[i] as objectKey] !== null) lastValidStatus = i;
-			else break;
-		}
-		return (lastValidStatus as msgStatusEnum);
-	}
-	else {
-		let unameList = Object.keys(msg.recipientStatuses); //get a list of recipient userIDs
-		let maxStatus = new Array<Number>; //array of the max status (most recent status) for each of the userIDs
-
-		unameList.forEach(userID => {
-			let lastValidStatus = 0;
-			let userData = msg.recipientStatuses[userID]; //the data for the userID
-			let userKeys2 = Object.keys(msg.recipientStatuses[userID]).sort(); //the keys for the statuses under the userID
-			
-			type objectKey = keyof typeof userData; //the datatype for the keys under the userID
-
-			//loop through each of the possible keys(status items) in the array
-			for (let i = 0; i < userKeys2.length; i++) {
-				//if the current key in the values d
-				if (userData[userKeys2[i] as objectKey] !== null) {
-					lastValidStatus = i;
-				}
-				else {
-					break;
-				}
-			}
-			maxStatus.push(lastValidStatus);
-		});
-
-		maxStatus = maxStatus.sort(); //sort will sort in ascending order.
-
-		return (maxStatus[0] as msgStatusEnum);  //return the lowest message status available.
-	}
-	
 }
 
 
@@ -481,7 +425,7 @@ wss.on('connection', async function connection(ws: WebSocket, request) {
 									if (updates) {
 										console.log("updates to raw message!");
 										await msgCollection.updateOne({_id: new ObjectId(msgID)}, {$set: {recipientStatuses: msgdata.recipientStatuses}});
-										sendMessageToUserIfConnected(msgdata.sender.toString(), JSON.stringify({msgType: "messageUpdate", data: {_id: msgID, status:getMostRecentStatus(msgdata)}}));
+										sendMessageToUserIfConnected(msgdata.sender.toString(), JSON.stringify({msgType: "messageUpdate", data: {_id: msgID, status:getMostRecentStatus(msgdata.recipientStatuses)}}));
 									}	
 								}
 												

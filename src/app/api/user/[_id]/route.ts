@@ -6,10 +6,9 @@ import { ServerUser } from "@/app/classes/serverUser";
 
 
 //this sends out the chats for a user
-export const GET = async function GET(
-    req: Request,
-    { params }: { params: { _id: string } }) {
-    
+export const GET = async function GET(req: Request, props: { params: Promise<{ _id: string }> }) {
+    const params = await props.params;
+
     //make sure there is a valid session
     let session = await auth();
     if (session) {

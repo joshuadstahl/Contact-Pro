@@ -7,9 +7,10 @@ import { Chat } from "@/app/classes/chats";
 
 
 //this sends out the chats for a user
-export const GET = auth(async function GET(req) {
-    if (req.auth) {
-        let session = req.auth;
+export const GET = async function GET() {
+    let session = await auth();
+    if (session) {
+        //let session = req.auth;
         const client: MongoClient = new MongoClient(process.env.DB_CONN_STRING ?? "");
         await client.connect();
         const db: Db = client.db(process.env.DB_NAME ?? "");
@@ -59,4 +60,4 @@ export const GET = auth(async function GET(req) {
         return NextResponse.json(out, {status: 200});
     }
     return NextResponse.json({ message: "Not authenticated" }, { status: 401 })
-})
+}

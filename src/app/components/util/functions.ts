@@ -1,3 +1,5 @@
+import { msgStatusEnum } from "@/app/classes/messages";
+import { iRecipientStatuses } from "@/app/classes/serverMessage";
 import { userStatus } from "@/app/classes/user";
 import { RandomWordOptions, generateSlug } from "random-word-slugs";
 
@@ -97,4 +99,54 @@ export function randomUsername(): string {
     let num2 = num.toString().padStart(3, "0"); //pad the random 3 numbers with 0s
 
     return slug + num2;
+}
+
+//a function to get the most recent status of a message, given the recipient statuses of the message.
+//Accepts: iRecipientStatuses
+//Returns: msgStatusEnum
+export function getMostRecentStatus(recipientStatuses: iRecipientStatuses): msgStatusEnum {
+    if (Object.keys(recipientStatuses).length == 1) {
+		let lastValidStatus = 0;
+		let userID = Object.keys(recipientStatuses)[0]; //get the userID
+		let userData = recipientStatuses[userID]; //the data for the userID
+		let userKeys2 = Object.keys(recipientStatuses[userID]).sort(); //the keys for the statuses under the userID
+		
+		type objectKey = keyof typeof userData; //the datatype for the keys under the userID
+
+		//loop through each of the possible keys(status items) in the array
+		for (let i = 0; i < userKeys2.length; i++) {
+			//if the current key in the values d
+			if (userData[userKeys2[i] as objectKey] !== null) lastValidStatus = i;
+			else break;
+		}
+		return (lastValidStatus as msgStatusEnum);
+	}
+	else {
+		let unameList = Object.keys(recipientStatuses); //get a list of recipient userIDs
+		let maxStatus = new Array<Number>; //array of the max status (most recent status) for each of the userIDs
+
+		unameList.forEach(userID => {
+			let lastValidStatus = 0;
+			let userData = recipientStatuses[userID]; //the data for the userID
+			let userKeys2 = Object.keys(recipientStatuses[userID]).sort(); //the keys for the statuses under the userID
+			
+			type objectKey = keyof typeof userData; //the datatype for the keys under the userID
+
+			//loop through each of the possible keys(status items) in the array
+			for (let i = 0; i < userKeys2.length; i++) {
+				//if the current key in the values d
+				if (userData[userKeys2[i] as objectKey] !== null) {
+					lastValidStatus = i;
+				}
+				else {
+					break;
+				}
+			}
+			maxStatus.push(lastValidStatus);
+		});
+
+		maxStatus = maxStatus.sort(); //sort will sort in ascending order.
+
+		return (maxStatus[0] as msgStatusEnum);  //return the lowest message status available.
+	}
 }
