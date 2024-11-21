@@ -1,9 +1,8 @@
 import { WebSocketServer, WebSocket } from 'ws';
 import { MongoClient, Db, Collection, ObjectId } from 'mongodb';
 const dotenv = require('dotenv').config({ path: '.env.local' })
-import { createHash, randomUUID } from 'crypto';
-import {msgStatusEnum} from "../app/classes/messages";
-import {ServerMessage, iRecipientStatuses} from "@/app/classes/serverMessage";
+import { createHash } from 'crypto';
+import {iRecipientStatuses} from "@/app/classes/serverMessage";
 import { getMostRecentStatus } from '@/app/components/util/functions';
 
 
@@ -272,22 +271,10 @@ wss.on('connection', async function connection(ws: WebSocket, request) {
 											}
 										}
 
-										//if the client is the same as the current user ID,
-										//make sure you send different information (e.g read=true)
-										if (client == currUserID) {
-											//if the client WS is not the same as the current websocket
-											if (clientWS != ws) {
-												out.data.read = true;
-												out.data.received = true;
-												out.data.status = 0;
-												clientWS.send(JSON.stringify(out));
-											}
-										}
-										else {
-											//if the client WS is not the same as the current websocket
-											if (clientWS != ws) {
-												clientWS.send(JSON.stringify(out));
-											}
+										//if the client WS is not the same as the current websocket,
+										//send the new message.
+										if (clientWS != ws) {
+											clientWS.send(JSON.stringify(out));
 										}
 										
 									})
