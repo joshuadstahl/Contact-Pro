@@ -173,7 +173,6 @@ wss.on('connection', async function connection(ws: WebSocket, request) {
 
 	function sendMessageToUserIfConnected(userID: string, msg: string) {
 		if (userID in clients) {
-			console.log("sending!");
 			clients[userID].forEach((ws) => {
 				ws.send(msg.toString());
 			})
@@ -216,8 +215,6 @@ wss.on('connection', async function connection(ws: WebSocket, request) {
 				handleClose("Unknown error occurred", 1011);
 				return;
 			}
-
-			console.log(msg);
 	
 			//if the user is logged in
 			if (currUserID != "") {
@@ -357,6 +354,8 @@ wss.on('connection', async function connection(ws: WebSocket, request) {
 										if (msg.data.received == true) {
 											//make sure that the recipientStatuses field is defined.
 											if (msgdata.recipientStatuses !== undefined) {
+
+												//make sure the current user is in the recipient statuses list.
 												if (currUserID in msgdata.recipientStatuses) {
 													//if the message for the current user is not delivered, set it to delivered.
 													if (msgdata.recipientStatuses[currUserID]['3delivered'] == null) {
@@ -365,7 +364,8 @@ wss.on('connection', async function connection(ws: WebSocket, request) {
 													}
 												}
 												else {
-													//we'll see if the user is a part of the chat or not.
+													//user is not a part of the recipient statuses list,
+													//so we'll see if the user is a part of the chat or not.
 													//If so, we'll add them to the message recipient statuses
 													const chatsCollection = db.collection<dbRawChat>("chats_raw");
 													let chat = await chatsCollection.findOne({_id: new ObjectId(msgdata.chatID ?? "")});
@@ -410,7 +410,6 @@ wss.on('connection', async function connection(ws: WebSocket, request) {
 									}
 	
 									if (updates) {
-										console.log("updates to raw message!");
 										await msgCollection.updateOne({_id: new ObjectId(msgID)}, {$set: {recipientStatuses: msgdata.recipientStatuses}});
 										sendMessageToUserIfConnected(msgdata.sender.toString(), JSON.stringify({msgType: "messageUpdate", data: {_id: msgID, status:getMostRecentStatus(msgdata.recipientStatuses)}}));
 									}	
@@ -421,9 +420,6 @@ wss.on('connection', async function connection(ws: WebSocket, request) {
 								console.log(err);
 								console.log("failed to update message status");
 							}
-
-							console.log("messageUpdate");
-
 						}
 						break;
 					case "userUpdateSubscribe":
@@ -438,7 +434,6 @@ wss.on('connection', async function connection(ws: WebSocket, request) {
 							userSubs[subID] = [currUserID];
 						}
 
-						console.log(userSubs);
 						break;
 					case "broadcast":
 						let relayMsg = msg.data.message;
