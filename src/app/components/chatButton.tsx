@@ -1,5 +1,4 @@
 import Link from 'next/link';
-import { Chat } from '../classes/chats';
 import ChatPhoto from './chatPhoto';
 import { GetFancyDate, GetFancyTime } from './util/functions';
 import { useContext } from 'react';
@@ -30,33 +29,25 @@ export default function ChatButton({chats, chatID, selected, setSelected}: {chat
         italicsMessage = "You: ";
     }
 
-    // let datetime = chat.lastMessageTime === undefined ? "N/A" : GetFancyDate(chat.lastMessageTime);
-    // if (chat.lastMessageTime !== undefined) {
-    //     if 
-    // }
-    // if (datetime[0] == "T" || datetime[0] == "Y")
-
-
     return (
         <Link onClick={() => setSelected(chat.chatID)} id={chat.chatID} href="" className={"hover:bg-french_gray-100 " +
-        "focus:bg-french_gray-200 active:bg-french_gray rounded-l-my rounded-t-my rounded-br " + 
+        "focus:bg-french_gray-200 active:bg-french_gray rounded-l-my rounded-t-my rounded-br min-w-0 " + 
         (selected === true ? "bg-french_gray-200" : " ")}>
-            <div className="flex flex-row p-2 shrink grow">
-                <div className="basis-auto relative">
+            <div className="flex flex-row p-2 gap-6">
+                <div className="basis-auto relative shrink-0">
                     <ChatPhoto showUnreadMessages={true} chat={chat}/>
                 </div>
-                <div className="basis-auto grow shrink pl-4 pt-2">
-                    <div className="grid grid-cols-1">
-                        <div className="flex flex-row gap-1 mb-1">
-                            <div className="text-normal grow text-persian_green text-base leading-none truncate" title={chat.name}>{chat.name ?? "Chat name 1"}</div>
-                            <div className="font-light text-charcoal text-sm leading-none" title={chat.lastMessageTime === undefined ? "N/A" : GetFancyTime(chat.lastMessageTime)}>{chat.lastMessageTime === undefined ? "N/A" : GetFancyDate(chat.lastMessageTime)}</div>
-                        </div>
-                        <div className="flex flex-row">
-                            {italics && <p className='font-light text-charcoal text-xs italic mr-1'>{italicsMessage}</p>}
-                            <p className="font-light text-charcoal text-xs truncate">{chat.lastMessage ?? ""}</p>
-                            
-                        </div>
-                    </div>         
+
+                <div className='flex flex-col gap-auto flex-nowrap min-w-0 grow pb-[3px] pt-0.5'>
+                    <h3 className="text-normal text-persian_green grow text-base truncate" title={chat.name}>{chat.name ?? "Chat name 1"}</h3>
+                    
+                    <div className="flex flex-row">
+                        {italics && <p className={'font-light text-charcoal text-xs italic mr-1' + (chat.lastMessage === undefined ? " truncate italicsExtraSpace" : "")} title={italicsMessage + " " + (chat.lastMessage ?? "")}>{italicsMessage}</p>}
+                        <p className="font-light text-charcoal text-xs truncate" title={italicsMessage + " " + (chat.lastMessage ?? "")}>{chat.lastMessage ?? ""}</p>
+                    </div>
+                </div>
+                <div className='flex flex-col items-end pt-[3px] shrink-0'>
+                    <div className="font-light text-charcoal text-sm leading-none" title={chat.lastMessageTime === undefined ? "N/A" : GetFancyTime(chat.lastMessageTime)}>{chat.lastMessageTime === undefined ? "N/A" : GetFancyDate(chat.lastMessageTime)}</div>
                 </div>
             </div>
         </Link>

@@ -18,6 +18,11 @@
 .filter-red {
   filter: invert(40%) sepia(77%) saturate(7500%) hue-rotate(350deg) brightness(92%) contrast(139%);
 }
+
+.italicsExtraSpace::after {
+  content: '';
+  padding: 1px;
+}
 /* :root {
   --foreground-rgb: 0, 0, 0;
   --background-start-rgb: 214, 219, 220;
