@@ -2,9 +2,9 @@ import { WebSocketServer, WebSocket } from 'ws';
 import { MongoClient, Db, Collection, ObjectId } from 'mongodb';
 const dotenv = require('dotenv').config({ path: '.env.local' })
 import { createHash } from 'crypto';
-import {iRecipientStatuses} from "@/app/classes/serverMessage";
-import { getMostRecentStatus } from '@/app/components/util/functions';
-import { msgType } from '@/app/classes/messages';
+import { iRecipientStatuses } from '../src/app/classes/serverMessage';
+import { getMostRecentStatus } from '../src/app/components/util/functions';
+import { msgType } from '../src/app/classes/messages';
 
 
 const wss = new WebSocketServer({

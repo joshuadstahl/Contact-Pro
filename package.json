@@ -7,9 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "ws-dev": "concurrently --kill-others \"npx tsc --watch --noEmit --project ./src/server/tsconfig.json\" \"npx esbuild .//src/server/server.ts --bundle --platform=node --outfile=./src/server/dist/server.js --watch\" \"nodemon --watch src/server/dist/ ./src/server/dist/server.js\"",
-    "ws-build": "npx tsc --noEmit --project ./src/server/tsconfig.json && npx esbuild .//src/server/server.ts --bundle --platform=node --outfile=./src/server/dist/server.js",
-    "ws": "node ./src/server/dist/server.js"
+    "ws-dev": "concurrently --kill-others \"npx tsc --watch --noEmit --project ./server/tsconfig.json\" \"npx esbuild .//server/server.ts --bundle --platform=node --outfile=./server/dist/server.js --watch\" \"nodemon --watch server/dist/ ./server/dist/server.js\"",
+    "ws-build": "npx tsc --noEmit --project ./server/tsconfig.json && npx esbuild .//server/server.ts --bundle --platform=node --outfile=./server/dist/server.js",
+    "ws": "node ./server/dist/server.js"
   },
   "dependencies": {
     "@types/ws": "^8.5.12",
