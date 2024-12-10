@@ -468,6 +468,106 @@ export default function App() {
                     }
                 }
             }
+            else if (body.msgType == "newFriendRequest") {
+                if (body.data !== undefined) {
+                    if (body.data.id !== undefined && body.data.sender !== undefined && body.data.recipient !== undefined && body.data.timestamp !== undefined) {
+                        let data = body.data;
+                        
+
+                        //if we need to add an new user to the user repo
+                        if (!(data.sender in userRepoRef.current)) {
+                            let copy = {...userRepoRef.current};
+                            try {
+                                let temp = await fetch("/api/user/" + data.sender);
+                                if (temp.ok) {
+                                    let resp = await temp.json();
+                                    copy[data.sender] = new User(resp);
+                                    data.sender = new User(resp);
+                                    userRepoUpdater(copy);
+                                }
+                                else {
+                                    console.log("Failed to successfully retrieve new user from api.");
+                                    return;
+                                }
+    
+                            }
+                            catch (err) {
+                                //something happened loading the new user from the server. Log error in the console and return.
+                                console.error(err);
+                                return;
+                            }
+                        }
+                        if (!(data.recipient in userRepoRef.current)) {
+                            let copy = {...userRepoRef.current};
+                            try {
+                                let temp = await fetch("/api/user/" + data.recipient);
+                                if (temp.ok) {
+                                    let resp = await temp.json();
+                                    copy[data.recipient] = new User(resp);
+                                    data.recipient = new User(resp);
+                                    userRepoUpdater(copy);
+                                }
+                                else {
+                                    console.log("Failed to successfully retrieve new user from api.");
+                                    return;
+                                }
+    
+                            }
+                            catch (err) {
+                                //something happened loading the new user from the server. Log error in the console and return.
+                                console.error(err);
+                                return;
+                            }
+                        }
+                        
+                        //set the sender and recipient to objects instead of just strings.
+                        if (typeof data.sender == "string") {
+                            data.sender = userRepoRef.current[data.sender];
+                        }
+                        if (typeof data.recipient == "string") {
+                            data.recipient = userRepoRef.current[data.recipient];
+                        }
+
+                        let copy = {...friendRequestsRef.current};
+                        copy[body.data.id] = new FriendRequest({_id: data.id, sender: data.sender, recipient: data.recipient, timestamp: data.timestamp});
+                        friendRequestsUpdater(copy);
+                    }
+                }
+            }
+            else if (body.msgType == "friendRequestUpdate") {
+                if (body.data !== undefined) {
+                    if (body.data.id !== undefined && body.data.sender !== undefined && body.data.recipient !== undefined && body.data.timestamp !== undefined && body.data.action !== undefined) {
+                        if (body.data.action == "accept" && body.data.newChatID !== undefined) {
+                            let friendsCopy = [...friendsRef.current];
+                            let chatsCopy = {...chatGroupsRef.current};
+
+                            if (body.data.recipient == currUser) {
+                                if (!friendsCopy.includes(body.data.sender)) {
+                                    friendsCopy.push(body.data.sender);
+                                }
+                            }
+                            else {
+                                if (!friendsCopy.includes(body.data.recipient)) {
+                                    friendsCopy.push(body.data.recipient);
+                                }
+                            }
+
+                            //add new chat
+                            let data = await (await fetch('/api/chat/?id=' + body.data.newChatID)).json()
+                            chatsCopy[body.data.newChatID] = new UserChat({...data, chatID: body.data.newChatID})
+
+                            console.log(body.data.newChatID);
+                            console.log()
+
+                            friendsUpdater(friendsCopy);
+                            chatGroupsUpdater(chatsCopy);
+                        }
+                        let copy = {...friendRequestsRef.current};
+                        delete copy[body.data.id];
+                        friendRequestsUpdater(copy);
+                    }
+                }
+            }
     	}, 
 	[changeStatus, addNewMessage, sendWSMessage, selectedChatID, chatGroupsUpdater, chatGroupsRef, convertToChatGroup,
         friendRequestsRef, friendRequestsUpdater, friendsRef, friendsUpdater, userRepoRef, userRepoUpdater, currUser
