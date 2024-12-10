@@ -6,7 +6,7 @@ import { CurrentUserContext } from './context/currentUserContext';
 import { UserRepositoryContext } from './context/userRepositoryContext';
 import { chatRepository } from '../app/page';
 
-export default function ChatButton({chats, chatID, selected, setSelected}: {chats: chatRepository, chatID: string, selected: boolean, setSelected: Function}) {
+export default function ChatButton({chats, chatID, selected, setSelected, title = ""}: {chats: chatRepository, chatID: string, selected: boolean, setSelected: Function, title?: string}) {
 
     //get the current application user from the context API
     const currUser = useContext(CurrentUserContext);
@@ -35,11 +35,11 @@ export default function ChatButton({chats, chatID, selected, setSelected}: {chat
         (selected === true ? "bg-french_gray-200" : " ")}>
             <div className="flex flex-row p-2 gap-6">
                 <div className="basis-auto relative shrink-0">
-                    <ChatPhoto showUnreadMessages={true} chat={chat}/>
+                    <ChatPhoto showUnreadMessages={true} chat={chat} title={title == "" ? chat.name : title}/>
                 </div>
 
                 <div className='flex flex-col gap-auto flex-nowrap min-w-0 grow pb-[3px] pt-0.5'>
-                    <h3 className="text-normal text-persian_green grow text-base truncate" title={chat.name}>{chat.name ?? "Chat name 1"}</h3>
+                    <h3 className="text-normal text-persian_green grow text-base truncate" title={title == "" ? chat.name : title}>{chat.name ?? "Chat name 1"}</h3>
                     
                     <div className="flex flex-row">
                         {italics && <p className={'font-light text-charcoal text-xs italic mr-1' + (chat.lastMessage === undefined ? " truncate italicsExtraSpace" : "")} title={italicsMessage + " " + (chat.lastMessage ?? "")}>{italicsMessage}</p>}

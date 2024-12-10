@@ -90,17 +90,17 @@ export default function OnboardingModal({currUser, userRepo, setUserRepo, pageLo
                             </div>
                             <div className="mr-2.5">
                             </div>
-                            <Button className="mt-5" text="Random Username" colorStyling="Light" color="Grayscale" size="Small" onClick={newRandomUsername} outline={true}/>
+                            <Button className="mt-5" text="Random Username" colorStyling="Light" color="Grayscale" size="Small" on={newRandomUsername} outline={true}/>
                         </div>
                         <div className="mt-2.5">
                             <p className="text-sm text-cadet_gray-600 text-center">Username can be changed later in account settings</p>
                         </div>
 
                         <div className="flex flex-row wrap-none items-center mt-14">
-                            <Button className="w-32" text="Later" colorStyling="Heavy" color="Grayscale" size="Small" onClick={chooseUsernameLater}/>
+                            <Button className="w-32" text="Later" colorStyling="Heavy" color="Grayscale" size="Small" on={chooseUsernameLater}/>
                             <div className="mr-8">
                             </div>
-                            <Button className="w-32" text="Choose" colorStyling="Heavy" color="Primary" size="Small" onClick={chooseUsername} submissionButton={true} submissionText="Choosing..." buttonSubmissionState={buttonSubmitting}/>
+                            <Button className="w-32" text="Choose" colorStyling="Heavy" color="Primary" size="Small" on={chooseUsername} submissionButton={true} submissionText="Choosing..." buttonSubmissionState={buttonSubmitting}/>
                         </div>
                     </div>
                 </div>

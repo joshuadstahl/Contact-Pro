@@ -17,6 +17,7 @@ import FormSub from "../components/formSub";
 import { Logout } from "../components/util/serverFunctions";
 import OnboardingModal from "../components/modals/onboardingModal";
 import useSWRImmutable from "swr/immutable";
+import { FriendRequest } from "../classes/friendRequest";
 
 export interface userRepository {
     [userID: string]: User
@@ -24,6 +25,10 @@ export interface userRepository {
 
 export interface chatRepository {
     [chatID: string] : GroupChat | UserChat
+}
+
+export interface friendRequestRepository {
+    [reqID: string] : FriendRequest
 }
 
 export default function App() {
@@ -43,9 +48,13 @@ export default function App() {
     const {data : userProfile, error, isLoading} = useSWR('/api/profile', fetcher); //get the signed in user
 
     const [chatGroups, setChatGroups] = useState<chatRepository>({}); //to keep a list of chats
-    const chatGroupsRef = useRef<chatRepository>({}); //necessary so that the event handler function handling the websocket events will always be up to date.
+    const chatGroupsRef = useRef<chatRepository>({}); //necessary so that the event handler function handling the websocket events will always have up to date data.
     const [friends, setFriends] = useState<Array<string>>([]); //keep track of a list of friends' ids.
+    const friendsRef = useRef<Array<string>>([]); //necessary so that the event handler function handling the websocket events will always have up to date data.
     const [friendsLoaded, setFriendsLoaded] = useState(false); //if the friends are loaded or not.
+    const [friendRequests, setFriendRequests] = useState<friendRequestRepository>({}); //keep a list of friend requests.
+    const friendRequestsRef = useRef<friendRequestRepository>({}); //necessary so that the event handler function handling the websocket events will always have up to date data.
+    const [friendRequestsLoaded, setFriendRequestsLoaded] = useState(false); //if the friend requests are loaded or not.
     const [chatGroupsLoaded, setChatGroupsLoaded] = useState(false); //to keep track if the chat groups have been loaded or not (especially for the case when there are no chats to be loaded.)
     const [selectedChatID, setSelectedChatID] = useState<string>(""); //to keep track of the id of the open chat
     const [currUser, setCurrUser] = useState<string>(""); //to keep the object of the current user
@@ -54,11 +63,13 @@ export default function App() {
     const [onboardingComplete, setOnboardingComplete] = useState(true); //if user onboarding is complete
     const [websocket, setWebsocket] = useState<WebSocket>({} as WebSocket); //stores the websocket
     const [userRepo, setUserRepo] = useState<userRepository>({});
+    const userRepoRef = useRef<userRepository>({}); //necessary so that the event handler function handling the websocket events will always have up to date data.
     const [oldestUnreadMessageID, setOldestUnreadMessageID] = useState(""); //keep track of the oldest unread message (if such thing)
     const [webSocketListener, setWebSocketListener] = useState(false); //keep track if there is a websocket listener already.
 	const [webSocketDeliveredNotifySent, setWebSocketDeliveredNotifySent] = useState(false); //if the web socket after it is connected told the websocket connection the messages it received.
 	const [webSocketConnectionStarted, setWebSocketConnectionStarted] = useState(false); //if the web socket is being connected to.
     const [addingChat, setAddingChat] = useState(false); //keep track if a chat is being added (thus if the add chat modal is open)
+    const [addingFriendRequest, setAddingFriendRequest] = useState(false); //keep track if a friend request is being added (thus if the add new friend request modal is open)
     const refSelectedChatID = useRef(""); //use Ref hook so webhook message event handler can access an updated version of selectedChatID.
     const refWebSocketListener = useRef(false); //use Ref hook so the code handling the WS connection can keep notified of the websocket event handler status.
     const loggingOut = useRef(false); //keeps track if the code is currently logging out so that the websocket doesn't keep trying to reconnect.
@@ -67,11 +78,46 @@ export default function App() {
 
     /*************************  FUNCTIONS  **************************/
 
+    //function to handle opening and closing the "add a chat" modal
+    const addAChatModalStateHandler = useCallback((open: boolean) => {
+        setAddingChat(open);
+        if (open == true) {
+            setAddingFriendRequest(false);
+        }
+    }, [setAddingChat, setAddingFriendRequest]);
+
+    //function to handle opening and closing the "add a friend request" modal
+    const addAFriendRequestModalStateHandler = useCallback((open: boolean) => {
+        setAddingFriendRequest(open);
+        if (open == true) {
+            setAddingChat(false);
+        }
+    }, [setAddingChat, setAddingFriendRequest]);
+
+
     //function to keep the chat groups up to date (across the ref and the state)
     const chatGroupsUpdater = useCallback(function chatGroupsUpdater(chatGroups: chatRepository) {
         setChatGroups(chatGroups);
         chatGroupsRef.current = chatGroups;
     }, [setChatGroups, chatGroupsRef]);
+
+    //function to keep the friends up to date (across the ref and the state)
+    const friendsUpdater = useCallback(function friendsUpdater(friends: Array<string>) {
+        setFriends(friends);
+        friendsRef.current = friends;
+    }, [setFriends, friendsRef]);
+
+    //function to keep the friend requests up to date (across the ref and the state)
+    const friendRequestsUpdater = useCallback(function friendRequestsUpdater(friendRequests: friendRequestRepository) {
+        setFriendRequests(friendRequests);
+        friendRequestsRef.current = friendRequests;
+    }, [setFriendRequests, friendRequestsRef]);
+
+    //function to keep the user repository up to date (across the ref and the state)
+    const userRepoUpdater = useCallback(function userRepoUpdater(userRepo: userRepository) {
+        setUserRepo(userRepo);
+        userRepoRef.current = userRepo;
+    }, [setUserRepo, userRepoRef]);
 
 	//takes an object and converts it to a chat group, either a group chat or user chat
 	const convertToChatGroup = useCallback(function convertToChatGroup(chat: {
@@ -167,9 +213,9 @@ export default function App() {
         let copy = {...userRepo};
         if (userID in copy) {
             copy[userID].status = (status as userStatus);
-            setUserRepo(copy);
+            userRepoUpdater(copy);
         }
-    }, [userRepo, setUserRepo])
+    }, [userRepo, userRepoUpdater])
     
     const WSIncomingMessageHandler = useCallback(
         async function WSIncomingMessageHandler(event: MessageEvent) {
@@ -219,7 +265,7 @@ export default function App() {
 
                             if (existantMessage === undefined) {
                                 console.log("triggered!!!");
-                                addNewMessage(new Message({message: data.message, _id: data._id, sender: userRepo[data.sender], timestamp: new Date(data.timestamp), status: data.status, read:read, received: true}), data.chatID);
+                                addNewMessage(new Message({message: data.message, _id: data._id, sender: userRepoRef.current[data.sender], timestamp: new Date(data.timestamp), status: data.status, read:read, received: true}), data.chatID);
                                 sendWSMessage({msgType: "messageUpdate", data: {_id: data._id, received: true, read: read}});
                             }
                             else if (oldIDActive) {
@@ -322,8 +368,110 @@ export default function App() {
 
 				}
 			}
+            else if (body.msgType == "newFriendRequest") {
+                if (body.data !== undefined) {
+                    if (body.data.id !== undefined && body.data.sender !== undefined && body.data.recipient !== undefined && body.data.timestamp !== undefined) {
+                        let data = body.data;
+                        
+
+                        //if we need to add an new user to the user repo
+                        if (!(data.sender in userRepoRef.current)) {
+                            let copy = {...userRepoRef.current};
+                            try {
+                                let temp = await fetch("/api/user/" + data.sender);
+                                if (temp.ok) {
+                                    let resp = await temp.json();
+                                    copy[data.sender] = new User(resp);
+                                    data.sender = new User(resp);
+                                    userRepoUpdater(copy);
+                                }
+                                else {
+                                    console.log("Failed to successfully retrieve new user from api.");
+                                    return;
+                                }
+    
+                            }
+                            catch (err) {
+                                //something happened loading the new user from the server. Log error in the console and return.
+                                console.error(err);
+                                return;
+                            }
+                        }
+                        if (!(data.recipient in userRepoRef.current)) {
+                            let copy = {...userRepoRef.current};
+                            try {
+                                let temp = await fetch("/api/user/" + data.recipient);
+                                if (temp.ok) {
+                                    let resp = await temp.json();
+                                    copy[data.recipient] = new User(resp);
+                                    data.recipient = new User(resp);
+                                    userRepoUpdater(copy);
+                                }
+                                else {
+                                    console.log("Failed to successfully retrieve new user from api.");
+                                    return;
+                                }
+    
+                            }
+                            catch (err) {
+                                //something happened loading the new user from the server. Log error in the console and return.
+                                console.error(err);
+                                return;
+                            }
+                        }
+                        
+                        //set the sender and recipient to objects instead of just strings.
+                        if (typeof data.sender == "string") {
+                            data.sender = userRepoRef.current[data.sender];
+                        }
+                        if (typeof data.recipient == "string") {
+                            data.recipient = userRepoRef.current[data.recipient];
+                        }
+
+                        let copy = {...friendRequestsRef.current};
+                        copy[body.data.id] = new FriendRequest({_id: data.id, sender: data.sender, recipient: data.recipient, timestamp: data.timestamp});
+                        friendRequestsUpdater(copy);
+                    }
+                }
+            }
+            else if (body.msgType == "friendRequestUpdate") {
+                if (body.data !== undefined) {
+                    if (body.data.id !== undefined && body.data.sender !== undefined && body.data.recipient !== undefined && body.data.timestamp !== undefined && body.data.action !== undefined) {
+                        if (body.data.action == "accept" && body.data.newChatID !== undefined) {
+                            let friendsCopy = [...friendsRef.current];
+                            let chatsCopy = {...chatGroupsRef.current};
+
+                            if (body.data.recipient == currUser) {
+                                if (!friendsCopy.includes(body.data.sender)) {
+                                    friendsCopy.push(body.data.sender);
+                                }
+                            }
+                            else {
+                                if (!friendsCopy.includes(body.data.recipient)) {
+                                    friendsCopy.push(body.data.recipient);
+                                }
+                            }
+
+                            //add new chat
+                            let data = await (await fetch('/api/chat/?id=' + body.data.newChatID)).json()
+                            chatsCopy[body.data.newChatID] = new UserChat({...data, chatID: body.data.newChatID})
+
+                            console.log(body.data.newChatID);
+                            console.log()
+
+                            friendsUpdater(friendsCopy);
+                            chatGroupsUpdater(chatsCopy);
+                        }
+                        let copy = {...friendRequestsRef.current};
+                        delete copy[body.data.id];
+                        friendRequestsUpdater(copy);
+                    }
+                }
+            }
     	}, 
-	[changeStatus, addNewMessage, sendWSMessage, selectedChatID, chatGroupsUpdater, userRepo, chatGroupsRef, convertToChatGroup])
+	[changeStatus, addNewMessage, sendWSMessage, selectedChatID, chatGroupsUpdater, userRepo, chatGroupsRef, convertToChatGroup,
+        friendRequestsRef, friendRequestsUpdater, friendsRef, friendsUpdater, userRepoRef, userRepoUpdater, currUser
+    ])
 
 
     /*************************  PAGE LOGIC  **************************/
@@ -338,7 +486,7 @@ export default function App() {
         let copy = {...userRepo};
         copy[userProfile.user._id] = new User(userProfile.user);
 
-        setUserRepo(copy);
+        userRepoUpdater(copy);
 
     }
 
@@ -368,7 +516,7 @@ export default function App() {
                 });
             });
             chatGroupsUpdater(cg2);
-            setUserRepo(userRepoCopy);
+            userRepoUpdater(userRepoCopy);
         }
 
         setChatGroupsLoaded(true);
@@ -389,9 +537,36 @@ export default function App() {
             newFriends.push(currFriend._id);
         }
 
-        setUserRepo(userRepoCopy);
-        setFriends(newFriends);
+        userRepoUpdater(userRepoCopy);
+        friendsUpdater(newFriends);
         setFriendsLoaded(true);
+    }
+
+    //handle the friend requests data
+    const rawFriendRequests = useSWR(userProfile !== undefined ? '/api/friends/requests' : null, fetcher); //get the friend requests
+    if (rawFriendRequests.data !== undefined && friendRequestsLoaded == false && chatGroupsLoaded == true && currUserLoaded !== undefined) {
+
+        let friendRequestsCopy = {...friendRequests};
+        let userRepoCopy = {...userRepo};
+        for (let i = 0; i < rawFriendRequests.data.data.length; i++) {
+
+            let currReq = new FriendRequest(rawFriendRequests.data.data[i]);
+            if (!(currReq._id in friendRequestsCopy)) {
+                friendRequestsCopy[currReq._id] = currReq;
+            }
+
+            if(!(currReq.sender._id in userRepoCopy)) {
+                userRepoCopy[currReq.sender._id] = currReq.sender;
+            }
+            if (!(currReq.recipient._id in userRepoCopy)) {
+                userRepoCopy[currReq.recipient._id] = currReq.recipient;
+            }
+
+        }
+        
+        friendRequestsUpdater(friendRequestsCopy);
+        userRepoUpdater(userRepoCopy);
+        setFriendRequestsLoaded(true);
     }
 
     
@@ -459,7 +634,7 @@ export default function App() {
                         setWebsocket(conn);
 
                         //subscribe to updates from the users this user knows
-                        Object.keys(userRepo).forEach((key) => {
+                        Object.keys(userRepoRef.current).forEach((key) => {
                             if (key != currUser) {
                                 let obj = {
                                     msgType: "userUpdateSubscribe",
@@ -479,7 +654,7 @@ export default function App() {
                             msgType: "userUpdate",
                             data: {
                                 updateType: "status",
-                                status: userRepo[currUser].status
+                                status: userRepoRef.current[currUser].status
                             }
                         }))
                     }
@@ -516,7 +691,7 @@ export default function App() {
         }
         
     }, [loaded, currUserLoaded, chatGroupsLoaded, websocket, setWebsocket, selectedChatID, 
-        userRepo, currUser, WSIncomingMessageHandler, setWebSocketListener, webSocketConnectionStarted, setWebSocketConnectionStarted])
+        userRepoRef, currUser, WSIncomingMessageHandler, setWebSocketListener, webSocketConnectionStarted, setWebSocketConnectionStarted])
     
 	let safeToLoad = currUserLoaded && chatGroupsLoaded && friendsLoaded && webSocketDeliveredNotifySent;
     if (safeToLoad && loaded == false) {
@@ -544,7 +719,7 @@ export default function App() {
     let copy = {...userRepo};
     if ("66d3604224b6f40eaafb0b94" in copy) {
         (copy["66d3604224b6f40eaafb0b94"] as User).name = "Harry Smith Bungaloo";
-        setUserRepo(copy);
+        userRepoUpdater(copy);
     }
   }  
 
@@ -571,7 +746,7 @@ export default function App() {
             websocket.close(); //close the websocket on logout (for some reason it doesn't immeditately get closed)
             await Logout()
         }}/>}
-        <OnboardingModal currUser={currUser} userRepo={userRepo} setUserRepo={setUserRepo} pageLoaded={loaded} onboardingComplete={onboardingComplete} setOnboardingComplete={setOnboardingComplete}/>
+        <OnboardingModal currUser={currUser} userRepo={userRepo} setUserRepo={userRepoUpdater} pageLoaded={loaded} onboardingComplete={onboardingComplete} setOnboardingComplete={setOnboardingComplete}/>
         <FullScreenModal shown={logoutModalOpen} backdrop={true} delayShow={50}>
             <div className="flex flex-col wrap-none items-center grow">
                 <div className="border border-cadet_gray-300 rounded-my  bg-white">
@@ -597,11 +772,15 @@ export default function App() {
             {loaded && 
             <UserRepositoryContext.Provider value={userRepo}>
                 <CurrentUserContext.Provider value={currUser}>
-                    <Navbar sendWSMessage={sendWSMessage} setStatus={changeStatus} updateUserRepo={setUserRepo} toggleLogoutModal={toggleLogoutModal}/>
+                    <Navbar sendWSMessage={sendWSMessage} setStatus={changeStatus} updateUserRepo={userRepoUpdater} toggleLogoutModal={toggleLogoutModal}/>
                     <div className="flex flex-row gap-2.5 h-full max-h-full overflow-hidden leading-none">
-                        <Sidebar chats={chatGroups} selectedChatID={selectedChatID} selectedChatToggler={selectedChatToggler} addingChat={addingChat} setAddingChat={setAddingChat}/>
+                        <Sidebar chats={chatGroups} setChats={chatGroupsUpdater} selectedChatID={selectedChatID} 
+                        selectedChatToggler={selectedChatToggler} addingChat={addingChat} setAddingChat={addAChatModalStateHandler} addingFriendRequest={addingFriendRequest}
+                        setAddingFriendRequest={addAFriendRequestModalStateHandler} friendRequests={friendRequests} setFriendRequests={friendRequestsUpdater} 
+                        friends={friends} setFriends={friendsUpdater}/>
                         <ChatWindow chatGroups={chatGroups} chatGroupsUpdater={chatGroupsUpdater} addNewMessage={addNewMessage} sendWSMessage={sendWSMessage} 
-                        chatID={selectedChatID} userRepo={userRepo} oldestUnreadMessageID={oldestUnreadMessageID} addingChat={addingChat} setAddingChat={setAddingChat} friends={friends}/>
+                        chatID={selectedChatID} userRepo={userRepo} oldestUnreadMessageID={oldestUnreadMessageID} addingChat={addingChat} setAddingChat={setAddingChat} addingFriendRequest={addingFriendRequest} 
+                        setAddingFriendRequest={setAddingFriendRequest} friends={friends} friendRequests={friendRequests} friendRequestsUpdater={friendRequestsUpdater} userRepoUpdater={userRepoUpdater}/>
                     </div>
                 </CurrentUserContext.Provider>
             </UserRepositoryContext.Provider>

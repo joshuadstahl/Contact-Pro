@@ -39,7 +39,7 @@ export const GET = async function GET() {
                     membersArray: 1,
                     messages: 1,
                     recipientStatuses: 1,
-                    accessingUser: user.username
+                    accessingUser: user._id.toString()
                 }
             )
 

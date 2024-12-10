@@ -22,7 +22,7 @@ export const POST = async function(req: Request) {
                     let user = await userCollection.findOne<ServerUser>({email: session?.user?.email});
 
                     //get the friends of the current user
-                    let friends : Array<string> = [];
+                    let friends : Array<ObjectId> = [];
                     if (user !== null && user.friends !== undefined) {
                         friends = user.friends;
                     }
@@ -55,11 +55,7 @@ export const POST = async function(req: Request) {
                         chatName = randomUsername() + " Chat";
                     }
 
-                    //figure out the chat type (is it a group chat or a one-on-one (user chat))
-                    let chatType = 'group';
-                    if (body.members.length == 1) {
-                        chatType = "user"
-                    }
+                    let chatType = 'group'; //the chat type can only be group, user chats are made only via accepting a friend request.
                     
                     //add the current user to the chat too
                     body.members.push(user._id.toString());
@@ -137,7 +133,7 @@ export const GET = async function(req: NextRequest) {
                 return NextResponse.json({ message: "You're not a member of the chat" }, { status: 400 });
             }
 
-            let temp = new ServerChat(chat as ServerChat);
+            let temp = new ServerChat({...chat, accessingUser: user._id.toString()});
             let out = temp.export(user._id.toString());
 
             return NextResponse.json(out, { status: 200 });

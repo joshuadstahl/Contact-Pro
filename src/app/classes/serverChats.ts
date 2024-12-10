@@ -12,7 +12,7 @@ export class ServerChat {
         //if it is a one-on-one chat
         if (chatType == "user") {
             let membersCopy = members.filter((mem) => {
-                if (mem.username == accessingUser) {
+                if (mem._id == accessingUser) {
                     return false;
                 }
                 return true;

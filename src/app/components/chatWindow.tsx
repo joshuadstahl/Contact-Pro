@@ -6,16 +6,19 @@ import ProfilePhoto from './profilePhoto';
 import Image from 'next/image';
 import MessageDisplayWrapper from './messageComponents/messageDisplayWrapper';
 import { GetColorBgClass, GetStatusName } from './util/functions';
-import { chatRepository, userRepository } from '../app/page';
+import { chatRepository, friendRequestRepository, userRepository } from '../app/page';
 import { CurrentUserContext } from './context/currentUserContext';
 import ChatWindowModal from './modals/ChatWindowModal';
 import AddNewChatModal from './modals/AddNewChatModal';
+import AddNewFriendRequestModal from './modals/AddNewFriendRequestModal';
 
 
 function ChatWindow({chatID, userRepo, sendWSMessage, addNewMessage, chatGroups, chatGroupsUpdater, oldestUnreadMessageID, 
-    addingChat, setAddingChat, friends} : {chatID: string, userRepo: userRepository, sendWSMessage:Function, 
+    addingChat, setAddingChat, addingFriendRequest, setAddingFriendRequest, friends, friendRequests, friendRequestsUpdater, userRepoUpdater} : {chatID: string, userRepo: userRepository, sendWSMessage:Function, 
         addNewMessage: Function, chatGroups: chatRepository, chatGroupsUpdater: Function, oldestUnreadMessageID: string, 
-         addingChat: boolean, setAddingChat: Function, friends:Array<string>}) {
+         addingChat: boolean, setAddingChat: (adding: boolean) => void, addingFriendRequest: boolean, setAddingFriendRequest: (adding: boolean) => void, 
+         friends:Array<string>, friendRequests: friendRequestRepository, friendRequestsUpdater: (friendRequests: friendRequestRepository) => void, 
+         userRepoUpdater: (userRepo: userRepository) => void}) {
     
     const currUser = useContext(CurrentUserContext);
     let chat = chatGroups[chatID] ?? new BlankChat();
@@ -163,30 +166,11 @@ function ChatWindow({chatID, userRepo, sendWSMessage, addNewMessage, chatGroups,
                 </div>
             </div>}
             {type == "empty" && <div className='flex flex-row flex-nowrap items-center min-h-full rounded-r-my border-solid border-1 border-cadet_gray-300'>
-                <h2 className='grow font-light text-base text-center'>Select a contact or group chat to get started</h2>
+                <h2 className='grow font-light text-base text-center text-cadet_gray'>Select a friend or group chat to get started</h2>
             </div>}
             <AddNewChatModal open={addingChat} setOpen={setAddingChat} chatGroups={chatGroups} chatGroupsUpdater={chatGroupsUpdater} sendWSMessage={sendWSMessage} inputFriends={friends}/>
-            <ChatWindowModal shown={false} backdrop={false} delayShow={50}>
-                <div className="flex flex-col wrap-none items-center grow">
-                    <div className="border border-cadet_gray-300 rounded-my  bg-white">
-                        <div className="flex flex-col wrap-none items-end">
-                            <button onClick={() => {setAddingChat(false)}} className="w-12 h-12"><Image className="filter-charcoal w-12 h-12" src="/icons/close-small.svg" width={48} height={48} alt="close"></Image></button>
-                        </div>
-                        <div className="px-24 mb-12">
-                            <h1 className="font-medium text-2xl text-center leading-none">Add a Friend</h1>
-                            <h2 className={"text-2xl text-center font-bold text-persian_orange mb-14"}>{currUser in userRepo ? userRepo[currUser].username  : ""}?</h2>
-                            <div className="flex flex-col wrap-none items-center">
-                                <div className="flex flex-row wrap-none items-center">
-                                    {/* <Button className="w-32" text="Cancel" colorStyling="Heavy" color="Grayscale" size="Small" onClick={toggleLogoutModal}/> */}
-                                    <div className="mr-8">
-                                    </div>
-                                    {/* <Button className="w-32" text="Logout" colorStyling="Heavy" color="SecondaryAlt" size="Small" onClick={() => setDoLogout(true)} submissionButton={true} submissionText="Logging out..."/> */}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </ChatWindowModal>
+            <AddNewFriendRequestModal open={addingFriendRequest} setOpen={setAddingFriendRequest} friendRequests={friendRequests} friendRequestsUpdater={friendRequestsUpdater} friends={friends} userRepoUpdater={userRepoUpdater}/>
+            
         </div>
     );
 

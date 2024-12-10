@@ -4,6 +4,7 @@ const dotenv = require('dotenv').config({ path: '.env.local' })
 import { createHash } from 'crypto';
 import {iRecipientStatuses} from "@/app/classes/serverMessage";
 import { getMostRecentStatus } from '@/app/components/util/functions';
+import { msgType } from '@/app/classes/messages';
 
 
 const wss = new WebSocketServer({
@@ -146,6 +147,8 @@ wss.on('connection', async function connection(ws: WebSocket, request) {
 		ws.close(1000, "Unauthorized");
 	}
 
+	//propregates an update to the subscribed users
+	//of a user, and other clients of that user.
 	function propagateToSubs(update: string) {
 		if (currUserID in userSubs) {
 			userSubs[currUserID].forEach((user) => {
@@ -277,6 +280,49 @@ wss.on('connection', async function connection(ws: WebSocket, request) {
 									})
 								}
 							});
+						}
+						break;
+					case "friendRequest":
+						//only allow this type of message from the HTTP API
+						if (msg.data !== undefined && currUserID == "HTTPAPI-CLIENT") {
+							if (msg.data.id !== undefined && msg.data.sender !== undefined && msg.data.recipient !== undefined && msg.data.timestamp !== undefined && msg.data.action !== undefined) {
+								if (["create", "accept", "reject", "cancel"].includes(msg.data.action)) {
+									let msgOut = "";
+									if (msg.data.action == "create") {
+										msgOut = JSON.stringify({msgType: "newFriendRequest", data: {
+											id: msg.data.id,
+											sender: msg.data.sender,
+											recipient: msg.data.recipient,
+											timestamp: msg.data.timestamp,
+											action: msg.data.action
+										}});
+									}
+									else if (msg.data.action == "accept" && msg.data.newChatID !== undefined) {
+										msgOut = JSON.stringify({msgType: "friendRequestUpdate", data: {
+											id: msg.data.id,
+											sender: msg.data.sender,
+											recipient: msg.data.recipient,
+											timestamp: msg.data.timestamp,
+											action: msg.data.action,
+											newChatID: msg.data.newChatID
+										}});
+									}
+									else if (msg.data.action != "accept") {
+										msgOut = JSON.stringify({msgType: "friendRequestUpdate", data: {
+											id: msg.data.id,
+											sender: msg.data.sender,
+											recipient: msg.data.recipient,
+											timestamp: msg.data.timestamp,
+											action: msg.data.action
+										}});
+									}
+									
+									console.log(msg.data.recipient, msg.data.sender);
+									sendMessageToUserIfConnected(msg.data.sender, msgOut); //send message to sender (all clients of sender)
+									console.log("now sending to recipient");
+									sendMessageToUserIfConnected(msg.data.recipient, msgOut); //send message to recipient (all clients of recipient)
+								}
+							}
 						}
 						break;
 					case "newChat":
