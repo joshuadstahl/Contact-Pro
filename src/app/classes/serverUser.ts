@@ -11,7 +11,7 @@ export class ServerUser {
         this.email = email;
         this.username = username;
         this.savedStatus = savedStatus;
-        this.friends = friends !== undefined ? friends.map((frnd) => frnd.toString()) : [];
+        this.friends = friends !== undefined ? friends.map((frnd) => new ObjectId(frnd.toString())) : [];
     }
 
     public _id: string
@@ -21,7 +21,7 @@ export class ServerUser {
     public email = "";
     public username = "";
     public savedStatus;
-    public friends : Array<string>;
+    public friends : Array<ObjectId>;
 
     public export(currUserID: string) {
 

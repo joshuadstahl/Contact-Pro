@@ -1,9 +1,9 @@
 'use client'
 import { MouseEventHandler, useState } from "react";
 
-export default function Button({text = "this is button text", colorStyling, color, outline = false, size = "Large", width = "auto", onClick, submissionButton = false, submissionText = "", buttonSubmissionState = undefined, disabled = false, selected = false, className = ""} : 
+export default function Button({text = "this is button text", colorStyling, color, outline = false, size = "Large", width = "auto", onClick, submissionButton = false, submissionText = "", buttonSubmissionState = undefined, disabled = false, selected = false, className = "", children = null} : 
     {text: string, colorStyling: "Light"|"Heavy", color: "Grayscale"|"Primary"|"Secondary"|"PrimaryAlt"|"SecondaryAlt",
-        outline?: boolean, size?: "Large"|"Small"|"XS"|"XXS", width?: "auto"|number, onClick:MouseEventHandler, submissionButton?: boolean, submissionText?: string, buttonSubmissionState?: boolean|undefined, disabled?: boolean, selected?: boolean, className?: string}) {
+        outline?: boolean, size?: "Large"|"Small"|"XS"|"XXS", width?: "auto"|number, onClick:MouseEventHandler, submissionButton?: boolean, submissionText?: string, buttonSubmissionState?: boolean|undefined, disabled?: boolean, selected?: boolean, className?: string, children?: React.ReactNode}) {
 
     let styling = ""; //variable to hold styling
 
@@ -130,8 +130,6 @@ export default function Button({text = "this is button text", colorStyling, colo
         setSubmitting = () => {};
     }
 
-    
-
     return (
         <div className="flex flex-row flex-nowrap items-center">
             <button onClick={(evt) => {
@@ -145,9 +143,11 @@ export default function Button({text = "this is button text", colorStyling, colo
                 else {
                     onClick(evt);
                 }
-            }} className={styling} disabled={disabled || submitting}>
+            }} className={styling + (children !== null ? " flex flex-row flex-nowrap items-center" : "")} disabled={disabled || submitting}>
                 {submitting ? submissionText : text}
+                {children}
             </button>
+            
         </div>
     );
 }

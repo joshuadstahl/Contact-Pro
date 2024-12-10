@@ -22,30 +22,9 @@ export default function AddNewChatModal({open, setOpen, chatGroups, chatGroupsUp
     }
 
     //get contexts
-    const currUser = useContext(CurrentUserContext);
     const userRepo = useContext(UserRepositoryContext);
 
-    // let searchableFriends : Array<friendSearchItem> = [ 
-    //     {name: "Joshua Stahl", username: "Joshstahl", _id:"66fda6234d3a1046d0924c75", photo:"https://lh3.googleusercontent.com/a/ACg8ocJfvuh7JYq8VlJojP2VaQ2KPpxq24jBWLyWScT_i_4CH86Y1kc0=s96-c"}, 
-    //     {name: "Jakin Stahl", username: "jcstahl", _id:"555", photo:"https://lh3.googleusercontent.com/a/ACg8ocJfvuh7JYq8VlJojP2VaQ2KPpxq24jBWLyWScT_i_4CH86Y1kc0=s96-c"},
-    //     {name: "Happy Guy", username: "DrabOyster850", _id:"672f7204fb87006681065271", photo:"https://lh3.googleusercontent.com/a/ACg8ocJfvuh7JYq8VlJojP2VaQ2KPpxq24jBWLyWScT_i_4CH86Y1kc0=s96-c"}
-    // ];
-
-    //create a array of friend search items (if necessary)
-    let searchableFriends : Array<friendSearchItem> = [];
-    for (let i = 0; i < inputFriends.length; i++) {
-        if (inputFriends[i] in userRepo) {
-            let user = userRepo[inputFriends[i]];
-            searchableFriends.push({
-                name: user.name,
-                username: user.username,
-                _id: user._id,
-                photo: user.photo
-            });
-        }
-    }
-
-    const [friends, setFriends] = useState([...searchableFriends]);
+    const [friends, setFriends] = useState<Array<friendSearchItem>>([]);
     const [friendSearchText, setFriendSearchText] = useState("");
     const [filteredFriends, setFilteredFriends] = useState(friends);
     const [newGroupMembers, setNewGroupMembers] = useState(new Array<friendSearchItem>);
@@ -55,7 +34,50 @@ export default function AddNewChatModal({open, setOpen, chatGroups, chatGroupsUp
     const [onErrorText, setOnErrorText] = useState(""); //the error text shown, if shown
     const [chatName, setChatName] = useState(""); //the name of the new chat
     
+    //create a array of friend search items (if necessary)
+    if (friends.length + newGroupMembers.length != inputFriends.length) {
+        let searchableFriends : Array<friendSearchItem> = [];
+        for (let i = 0; i < inputFriends.length; i++) {
+            //as long as the input friend is not in 
+            if (inputFriends[i] in userRepo) {
+                let found = newGroupMembers.find((grpMember: friendSearchItem) => {
+                    if (inputFriends[i] == grpMember._id) {
+                        return true;
+                    }
+                    return false;
+                })
+                if (!found) {
+                    let user = userRepo[inputFriends[i]];
+                    searchableFriends.push({
+                        name: user.name,
+                        username: user.username,
+                        _id: user._id,
+                        photo: user.photo
+                    });
+                }
+            }
+        }
 
+        //set the friend list
+        setFriends(searchableFriends);
+    }
+
+    function resetFriendsList() {
+        let friendsArray : Array<friendSearchItem> = [];
+        inputFriends.forEach((friendID) => {
+            if (friendID in userRepo) {
+                let user = userRepo[friendID];
+                friendsArray.push({
+                    name: user.name,
+                    username: user.username,
+                    _id: user._id,
+                    photo: user.photo
+                });
+            }
+        })
+        setFriends(friendsArray);
+    }
+    
 
     function addNewChatModalTextChange(e: ChangeEvent<HTMLInputElement>) {
         if (e.target.value == "") {
@@ -154,11 +176,8 @@ export default function AddNewChatModal({open, setOpen, chatGroups, chatGroupsUp
             }
         })
 
-        // setFilteredFriends(friends);
         setNewGroupMembers(copy);
-        if (copy.length == 0) {
-            setFriends(searchableFriends);
-        }
+        resetFriendsList() //reset the friends list.
 
         //reset any error message
         setOnErrorText("");
@@ -186,16 +205,8 @@ export default function AddNewChatModal({open, setOpen, chatGroups, chatGroupsUp
                 let newID = response.chatID;
                 let newName = response.name;
 
-                let newChat;
-                if (newGroupMembers.length == 1) {
-                    let otherUser = userRepo[newGroupMembers[0]._id];
-
-                    // newChat = new GroupChat({name: newName, messages:[], photo: "", chatID: newID});
-                    newChat = new UserChat({otherUser: otherUser, messages: [], chatID: newID, name: newName});
-                }
-                else {
-                    newChat = new GroupChat({name: newName, messages:[], photo: "", chatID: newID});
-                }
+                //only group chats can be made, user chats are made via accepting friend requests.
+                let newChat = new GroupChat({name: newName, messages:[], photo: "", chatID: newID});
 
                 //notify the websocket server of the new chat
                 sendWSMessage({"msgType":"newChat", data: {_id: newID}});
@@ -208,7 +219,7 @@ export default function AddNewChatModal({open, setOpen, chatGroups, chatGroupsUp
                 setCreatingChat(false); //set the button to not be submitting
                 setNewGroupMembers(new Array<friendSearchItem>); //reset the new group members field
                 setChatName(""); //reset the chat name field.
-                setFriends([...searchableFriends]) //reset the friends list.
+                resetFriendsList() //reset the friends list.
             }
             else {
                 setOnErrorText("Unable to create chat"); //set the error text
@@ -274,18 +285,14 @@ export default function AddNewChatModal({open, setOpen, chatGroups, chatGroupsUp
                                         <div className="flex flex-row flex-wrap items-center gap-y-1.5">
                                             {
                                                 newGroupMembers.map((frnd) => {
-                                                    return <FriendCloseableTextBubble key={frnd.name + frnd.username} text={frnd.name} photo={frnd.photo} xCallback={() => removeNewGroupMember(frnd)}/>
+                                                    return <FriendCloseableTextBubble key={frnd.name + frnd.username} name={frnd.name} username={frnd.username} photo={frnd.photo} xCallback={() => removeNewGroupMember(frnd)}/>
                                                 })
                                             }
                                             
                                         </div>
                                     </div>}
-
                                     
                                 </div>
-                                
-
-                                
                                 
                             </div>
                             <div className="flex flex-row wrap-none items-center">

@@ -168,6 +168,9 @@ const config: Config = {
         '1': '1px',
         '3': '3px',
         '6': '6px',
+      },
+      boxShadow: {
+        'notify': '0 0 7px 2px rgba(0, 0, 0, 0.15)',
       }
     }
   },

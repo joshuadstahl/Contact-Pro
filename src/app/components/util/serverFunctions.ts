@@ -3,6 +3,8 @@ import { signIn, signOut, auth } from "@/auth";
 import { Db, Collection, MongoClient } from "mongodb";
 import { randomInt, createHash } from "crypto";
 import { MessageEvent, WebSocket } from "ws";
+import { ServerUser } from "@/app/classes/serverUser";
+import { Server } from "http";
 
 export async function GoogleLogin() {
     'use server'
@@ -167,4 +169,24 @@ export async function sendWSMessage(message: object, expectedRespMessage: string
         
     })
 
+}
+
+//either returns the id of a user, or returns undefined if there is no such username in the system.
+export async function getUserIDfromUsername(username: string): Promise<string|undefined> {
+
+    let [db, client] = await CreateDbConnection();
+
+    const userCollection: Collection<ServerUser> = db.collection<ServerUser>("users");
+
+    let doc = await userCollection.findOne({username: username})
+
+    if (doc === null) {
+        client.close()
+        return undefined;
+    }
+    else {
+        client.close()
+        return doc._id.toString();
+    }
+    
 }

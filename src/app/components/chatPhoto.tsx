@@ -5,7 +5,7 @@ import { useContext } from 'react';
 import { UserRepositoryContext } from './context/userRepositoryContext';
 
 
-export default function ChatPhoto({chat, showUnreadMessages = true, } : {chat: Chat, showUnreadMessages: boolean}) {
+export default function ChatPhoto({chat, showUnreadMessages = true, title="" } : {chat: Chat, showUnreadMessages: boolean, title?: string}) {
 
 	const userRepo = useContext(UserRepositoryContext);
 
@@ -15,12 +15,11 @@ export default function ChatPhoto({chat, showUnreadMessages = true, } : {chat: C
 
 	return (
 		<div className="relative">
-			<PPhoto photo={chatPhoto}/>
+			<PPhoto photo={chatPhoto} title={title}/>
 			{chat.constructor == UserChat && <div title={statusName} className={"absolute bottom-0.5 right-0.5 rounded-full " + statusColor + " w-2.5 h-2.5"}></div>}
 			{
-				chat.unreadMessages > 0 && showUnreadMessages && <div className="absolute flex flex-row flex-nowrap items-center place-content-center
-				top-0 -right-1 rounded-full bg-persian_orange w-5 h-5">
-					<p className="text-center text-white text-[10px] ">{chat.unreadMessages > 9 ? "9+" : chat.unreadMessages}</p>
+				chat.unreadMessages > 0 && showUnreadMessages && <div className="absolute flex items-center justify-center top-0 -right-1 rounded-full bg-persian_orange size-5 shadow-notify">
+					<p className="text-center text-white text-[0.625rem] leading-[1.25rem] -mb-[0.03868rem]">{chat.unreadMessages > 9 ? "9+" : chat.unreadMessages}</p>
 				</div>
 			}
 		</div>
