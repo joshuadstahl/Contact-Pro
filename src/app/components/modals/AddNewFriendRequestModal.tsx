@@ -11,7 +11,7 @@ import { getUserIDfromUsername } from "../util/serverFunctions";
 import { User } from "@/app/classes/user";
 
 
-export default function AddNewFriendRequestModal({open, setOpen, friends, userRepoUpdater, friendRequests, friendRequestsUpdater}: {open: boolean, setOpen: (open: boolean) => void, friends: Array<string>, userRepoUpdater: (userRepo: userRepository) => void, friendRequests: friendRequestRepository, friendRequestsUpdater: (friendRequests: friendRequestRepository) => void}) {
+export default function AddNewFriendRequestModal({open, setOpen, friends, userRepoUpdater, friendRequests, friendRequestsUpdater, sendWSMessage}: {open: boolean, setOpen: (open: boolean) => void, friends: Array<string>, userRepoUpdater: (userRepo: userRepository) => void, friendRequests: friendRequestRepository, friendRequestsUpdater: (friendRequests: friendRequestRepository) => void, sendWSMessage: (message: object|string) => void}) {
 
     //get contexts
     const currUser = useContext(CurrentUserContext);
@@ -46,7 +46,7 @@ export default function AddNewFriendRequestModal({open, setOpen, friends, userRe
         }
 
         try {
-            recipientUser = new User(await (await fetch("/api/user/" + recipientUserID)).json())
+            recipientUser = new User(await (await fetch("/api/user/" + recipientUserID)).json());
         } catch (error) {
             
         }
@@ -74,6 +74,13 @@ export default function AddNewFriendRequestModal({open, setOpen, friends, userRe
                     let userRepoCopy = {...userRepo};
                     userRepoCopy[recipientUser._id.toString()] = recipientUser;
                     userRepoUpdater(userRepoCopy);
+
+                    sendWSMessage({
+                        msgType: "userUpdateSubscribe",
+                        data: {
+                            userSubID: recipientUserID
+                        }
+                    }) //notify the websocket server that we need to subscribe to this user.
                     
                     setOpen(false); //close the modal
                     setCreatingFriendRequest(false); //set the button to not be submitting

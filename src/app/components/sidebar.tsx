@@ -12,8 +12,7 @@ import { UserRepositoryContext } from './context/userRepositoryContext';
 import { FriendRequest } from '../classes/friendRequest';
 import { CurrentUserContext } from './context/currentUserContext';
 
-
-function Sidebar({chats, setChats, selectedChatID, selectedChatToggler, addingChat, setAddingChat, addingFriendRequest, setAddingFriendRequest, friendRequests, setFriendRequests, friends, setFriends} : {chats: chatRepository, setChats: (chats: chatRepository) => void, selectedChatID: string, selectedChatToggler: (chatID: string) => void, addingChat:boolean, setAddingChat:Function, addingFriendRequest: boolean, setAddingFriendRequest: (adding: boolean) => void, friendRequests: friendRequestRepository, setFriendRequests: (friendRequests: friendRequestRepository) => void, friends: Array<string>, setFriends: (friends: Array<string>) => void}) {
+function Sidebar({chats, setChats, selectedChatID, selectedChatToggler, addingChat, setAddingChat, addingFriendRequest, setAddingFriendRequest, friendRequests, setFriendRequests, friends, setFriends, sendWSMessage} : {chats: chatRepository, setChats: (chats: chatRepository) => void, selectedChatID: string, selectedChatToggler: (chatID: string) => void, addingChat:boolean, setAddingChat:Function, addingFriendRequest: boolean, setAddingFriendRequest: (adding: boolean) => void, friendRequests: friendRequestRepository, setFriendRequests: (friendRequests: friendRequestRepository) => void, friends: Array<string>, setFriends: (friends: Array<string>) => void, sendWSMessage: (message: object|string) => void}) {
 
     const [selectedButton, setSelectedButton] = useState([true, false]);
     const [friendsSelectedButton, setFriendsSelectedButton] = useState([true, false]);
@@ -68,6 +67,12 @@ function Sidebar({chats, setChats, selectedChatID, selectedChatToggler, addingCh
                     friendsCopy.push(friendRequest.sender._id);
                     setChats(chatsCopy);
                     setFriends(friendsCopy);
+                    sendWSMessage({
+                        msgType: "userUpdateSubscribe",
+                        data: {
+                            userSubID: data.recipient
+                        }
+                    }) //notify ws that we need to subscribe to this user.
                     console.log(chatsCopy);
                 }
                 else {

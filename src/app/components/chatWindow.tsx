@@ -14,7 +14,7 @@ import AddNewFriendRequestModal from './modals/AddNewFriendRequestModal';
 
 
 function ChatWindow({chatID, userRepo, sendWSMessage, addNewMessage, chatGroups, chatGroupsUpdater, oldestUnreadMessageID, 
-    addingChat, setAddingChat, addingFriendRequest, setAddingFriendRequest, friends, friendRequests, friendRequestsUpdater, userRepoUpdater} : {chatID: string, userRepo: userRepository, sendWSMessage:Function, 
+    addingChat, setAddingChat, addingFriendRequest, setAddingFriendRequest, friends, friendRequests, friendRequestsUpdater, userRepoUpdater} : {chatID: string, userRepo: userRepository, sendWSMessage: (message: object|string) => void, 
         addNewMessage: Function, chatGroups: chatRepository, chatGroupsUpdater: Function, oldestUnreadMessageID: string, 
          addingChat: boolean, setAddingChat: (adding: boolean) => void, addingFriendRequest: boolean, setAddingFriendRequest: (adding: boolean) => void, 
          friends:Array<string>, friendRequests: friendRequestRepository, friendRequestsUpdater: (friendRequests: friendRequestRepository) => void, 
@@ -169,7 +169,7 @@ function ChatWindow({chatID, userRepo, sendWSMessage, addNewMessage, chatGroups,
                 <h2 className='grow font-light text-base text-center text-cadet_gray'>Select a friend or group chat to get started</h2>
             </div>}
             <AddNewChatModal open={addingChat} setOpen={setAddingChat} chatGroups={chatGroups} chatGroupsUpdater={chatGroupsUpdater} sendWSMessage={sendWSMessage} inputFriends={friends}/>
-            <AddNewFriendRequestModal open={addingFriendRequest} setOpen={setAddingFriendRequest} friendRequests={friendRequests} friendRequestsUpdater={friendRequestsUpdater} friends={friends} userRepoUpdater={userRepoUpdater}/>
+            <AddNewFriendRequestModal open={addingFriendRequest} setOpen={setAddingFriendRequest} friendRequests={friendRequests} friendRequestsUpdater={friendRequestsUpdater} friends={friends} userRepoUpdater={userRepoUpdater} sendWSMessage={sendWSMessage}/>
             
         </div>
     );
