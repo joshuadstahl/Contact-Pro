@@ -1,20 +1,20 @@
 'use client'
 import Image from "next/image";
-import Sidebar from '../components/sidebar';
-import Navbar from "../components/navbar";
-import ChatWindow from '../components/chatWindow';
+import Sidebar from '../components/mainSections/sidebar';
+import Navbar from "../components/mainSections/navbar";
+import ChatWindow from '../components/mainSections/chatWindow';
 import { Chat, UserChat, GroupChat } from "../classes/chats";
 import { Message } from "../classes/messages";
 import { userStatus, User } from "../classes/user";
 import { useState, ChangeEvent, useEffect, useRef, useCallback } from "react";
-import { CurrentUserContext } from "../components/context/currentUserContext";
-import { UserRepositoryContext } from "../components/context/userRepositoryContext";
-import { ChatGroupsContext } from "../components/context/chatGroupsContext";
+import { CurrentUserContext } from "../context/currentUserContext";
+import { UserRepositoryContext } from "../context/userRepositoryContext";
+import { ChatGroupsContext } from "../context/chatGroupsContext";
 import useSWR from "swr";
-import Button from "../components/button";
+import Button from "../components/buttons/button";
 import FullScreenModal from "../components/modals/fullScreenModal";
 import FormSub from "../components/formSub";
-import { Logout } from "../components/util/serverFunctions";
+import { Logout } from "../functions/serverFunctions";
 import OnboardingModal from "../components/modals/onboardingModal";
 import useSWRImmutable from "swr/immutable";
 import { FriendRequest } from "../classes/friendRequest";

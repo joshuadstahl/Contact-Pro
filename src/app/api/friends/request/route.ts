@@ -3,7 +3,7 @@ import {Collection, Db, MongoClient, ObjectId, PushOperator, Timestamp } from "m
 import { NextRequest, NextResponse } from "next/server";
 import { ServerUser } from "@/app/classes/serverUser";
 import { RawServerFriendRequest } from "@/app/classes/serverFriendRequests";
-import { sendWSMessage } from "@/app/components/util/serverFunctions";
+import { sendWSMessage } from "@/app/functions/serverFunctions";
 
 export const POST = async function POST(req: NextRequest) {
     try {

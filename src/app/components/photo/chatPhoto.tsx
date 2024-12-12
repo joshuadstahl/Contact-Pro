@@ -1,8 +1,8 @@
-import { Chat, UserChat } from '../classes/chats';
+import { Chat, UserChat } from '../../classes/chats';
 import PPhoto from "./profilePhoto";
-import { GetColorBgClass, GetStatusName } from './util/functions';
+import { GetColorBgClass, GetStatusName } from '../../functions/functions';
 import { useContext } from 'react';
-import { UserRepositoryContext } from './context/userRepositoryContext';
+import { UserRepositoryContext } from '../../context/userRepositoryContext';
 
 
 export default function ChatPhoto({chat, showUnreadMessages = true, title="" } : {chat: Chat, showUnreadMessages: boolean, title?: string}) {

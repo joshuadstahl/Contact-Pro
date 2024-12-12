@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { GoogleLogin as gl2 } from "./util/serverFunctions";
+import { GoogleLogin as gl2 } from "../../functions/serverFunctions";
 
 export default function GoogleAuthButton({signup = false}: {signup?: boolean}) {
     return (

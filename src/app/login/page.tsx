@@ -2,7 +2,7 @@
 import { Assistant } from "next/font/google";
 import { useState } from "react";
 import Copyright from "../components/copyright";
-import GoogleAuthButton from "../components/googleAuthButton";
+import GoogleAuthButton from "../components/buttons/googleAuthButton";
 
 const assistant = Assistant(
     { 

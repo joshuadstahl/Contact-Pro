@@ -1,16 +1,16 @@
 'use client'
 import { useContext, useState } from 'react';
-import ChatButton from './chatButton';
-import { ChatButtonGroup } from '../classes/chatButtonGroup';
-import Button from "./button";
-import NotifyButton from './NotifyButton';
-import Copyright from './copyright';
-import { chatRepository, friendRequestRepository } from '../app/page';
-import { Chat, GroupChat, UserChat } from '../classes/chats';
-import FriendRequestTile from './friendRequestTile';
-import { UserRepositoryContext } from './context/userRepositoryContext';
-import { FriendRequest } from '../classes/friendRequest';
-import { CurrentUserContext } from './context/currentUserContext';
+import ChatButton from '../buttons/chatButton';
+import { ChatButtonGroup } from '../../classes/chatButtonGroup';
+import Button from "../buttons/button";
+import NotifyButton from '../buttons/NotifyButton';
+import Copyright from '../copyright';
+import { chatRepository, friendRequestRepository } from '../../app/page';
+import { Chat, GroupChat, UserChat } from '../../classes/chats';
+import FriendRequestTile from '../friendRequestTile';
+import { UserRepositoryContext } from '../../context/userRepositoryContext';
+import { FriendRequest } from '../../classes/friendRequest';
+import { CurrentUserContext } from '../../context/currentUserContext';
 
 function Sidebar({chats, setChats, selectedChatID, selectedChatToggler, addingChat, setAddingChat, addingFriendRequest, setAddingFriendRequest, friendRequests, setFriendRequests, friends, setFriends, sendWSMessage} : {chats: chatRepository, setChats: (chats: chatRepository) => void, selectedChatID: string, selectedChatToggler: (chatID: string) => void, addingChat:boolean, setAddingChat:Function, addingFriendRequest: boolean, setAddingFriendRequest: (adding: boolean) => void, friendRequests: friendRequestRepository, setFriendRequests: (friendRequests: friendRequestRepository) => void, friends: Array<string>, setFriends: (friends: Array<string>) => void, sendWSMessage: (message: object|string) => void}) {
 

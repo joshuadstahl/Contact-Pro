@@ -1,11 +1,11 @@
 import Link from 'next/link';
 import { useContext, useState } from 'react';
-import { CurrentUserContext } from './context/currentUserContext';
-import { UserRepositoryContext } from './context/userRepositoryContext';
+import { CurrentUserContext } from '../context/currentUserContext';
+import { UserRepositoryContext } from '../context/userRepositoryContext';
 import { chatRepository } from '../app/page';
-import ProfilePhotoWithStatus from './profilePhotoWithStatus';
+import ProfilePhotoWithStatus from './photo/profilePhotoWithStatus';
 import Image from 'next/image';
-import SquareIconButton from './SquareIconButton';
+import SquareIconButton from './buttons/SquareIconButton';
 
 export default function FriendRequestTile({type, userID, requestID, rejectCallback = (reqID: string) => {}, acceptCallback = (reqID: string) => {}, cancelCallback = (reqID: string) => {}, submitButtonDisabled = false}: {type: "Incoming"|"Outgoing", userID: string, requestID: string, rejectCallback?: (reqID: string) => void, acceptCallback?: (reqID: string) => void, cancelCallback?: (reqID: string) => void, submitButtonDisabled: boolean}) {
 

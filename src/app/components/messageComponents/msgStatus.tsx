@@ -1,6 +1,6 @@
-import { GetFancyTime } from "../util/functions";
+import { GetFancyTime } from "../../functions/functions";
 import { msgStatusEnum } from "@/app/classes/messages";
-import Button from "../button";
+import Button from "../buttons/button";
 import { MouseEventHandler } from "react";
 
 export default function MsgStatus({timestamp, msgStatus, msgFromUser, failedSend, resendCallback} : {timestamp: Date, msgStatus?: msgStatusEnum, msgFromUser: boolean, failedSend: boolean, resendCallback: MouseEventHandler}) {

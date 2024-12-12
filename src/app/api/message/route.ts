@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/auth";
 import { Db, Collection, ObjectId } from "mongodb";
 import { ServerUser } from "@/app/classes/serverUser";
-import { CreateDbConnection, sendWSMessage } from "@/app/components/util/serverFunctions";
+import { CreateDbConnection, sendWSMessage } from "@/app/functions/serverFunctions";
 import { iRecipientStatuses } from "@/app/classes/serverMessage";
 
 interface dbRawChat {

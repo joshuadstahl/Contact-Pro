@@ -1,13 +1,13 @@
 import ChatWindowModal from "./ChatWindowModal";
-import Button from "../button";
+import Button from "../buttons/button";
 import Image from "next/image";
 import { useState, ChangeEvent, useContext } from "react";
 import { userRepository } from "@/app/app/page";
-import { CurrentUserContext } from "../context/currentUserContext";
-import { UserRepositoryContext } from "../context/userRepositoryContext";
+import { CurrentUserContext } from "../../context/currentUserContext";
+import { UserRepositoryContext } from "../../context/userRepositoryContext";
 import { FriendRequest } from "@/app/classes/friendRequest";
 import { friendRequestRepository } from "@/app/app/page";
-import { getUserIDfromUsername } from "../util/serverFunctions";
+import { getUserIDfromUsername } from "../../functions/serverFunctions";
 import { User } from "@/app/classes/user";
 
 

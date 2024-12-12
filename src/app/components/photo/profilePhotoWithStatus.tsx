@@ -1,8 +1,8 @@
 import PPhoto from "./profilePhoto";
-import { GetColorBgClass, GetStatusName } from './util/functions';
+import { GetColorBgClass, GetStatusName } from '../../functions/functions';
 import { useContext } from 'react';
-import { UserRepositoryContext } from './context/userRepositoryContext';
-import { User } from '../classes/user';
+import { UserRepositoryContext } from '../../context/userRepositoryContext';
+import { User } from '../../classes/user';
 
 
 export default function ProfilePhotoWithStatus({user } : {user: User}) {

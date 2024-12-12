@@ -1,10 +1,10 @@
 import Link from 'next/link';
-import ChatPhoto from './chatPhoto';
-import { GetFancyDate, GetFancyTime } from './util/functions';
+import ChatPhoto from '../photo/chatPhoto';
+import { GetFancyDate, GetFancyTime } from '../../functions/functions';
 import { useContext } from 'react';
-import { CurrentUserContext } from './context/currentUserContext';
-import { UserRepositoryContext } from './context/userRepositoryContext';
-import { chatRepository } from '../app/page';
+import { CurrentUserContext } from '../../context/currentUserContext';
+import { UserRepositoryContext } from '../../context/userRepositoryContext';
+import { chatRepository } from '../../app/page';
 
 export default function ChatButton({chats, chatID, selected, setSelected, title = ""}: {chats: chatRepository, chatID: string, selected: boolean, setSelected: Function, title?: string}) {
 

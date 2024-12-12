@@ -3,7 +3,7 @@ import { MongoClient, Db, Collection, ObjectId } from 'mongodb';
 const dotenv = require('dotenv').config({ path: '.env.local' })
 import { createHash } from 'crypto';
 import { iRecipientStatuses } from '../src/app/classes/serverMessage';
-import { getMostRecentStatus } from '../src/app/components/util/functions';
+import { getMostRecentStatus } from '../src/app/functions/functions';
 import { msgType } from '../src/app/classes/messages';
 
 

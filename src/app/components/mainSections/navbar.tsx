@@ -1,12 +1,12 @@
 import { Assistant } from "next/font/google";
-import ProfilePhoto  from "./profilePhoto";
-import { CurrentUserContext } from './context/currentUserContext';
-import { UserRepositoryContext } from "./context/userRepositoryContext";
+import ProfilePhoto  from "../photo/profilePhoto";
+import { CurrentUserContext } from '../../context/currentUserContext';
+import { UserRepositoryContext } from "../../context/userRepositoryContext";
 import Image from "next/image";
 import { useContext, useEffect, useState } from "react";
-import { GetColorBgClass, GetColorTextClass, GetStatusName } from './util/functions';
-import DropdownMenuItem from "./dropdownMenuItem";
-import { userStatus, User } from "../classes/user";
+import { GetColorBgClass, GetColorTextClass, GetStatusName } from '../../functions/functions';
+import DropdownMenuItem from "../dropdownMenuItem";
+import { userStatus, User } from "../../classes/user";
 import { userAgent } from "next/server";
 
 const assistant = Assistant(

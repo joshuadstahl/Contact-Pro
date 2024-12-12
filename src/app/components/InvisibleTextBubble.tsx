@@ -1,5 +1,5 @@
 import { useState } from "react";
-import ProfilePhoto from "./profilePhoto";
+import ProfilePhoto from "./photo/profilePhoto";
 
 export default function InvisibleTextBubble() {
 

@@ -2,7 +2,7 @@ import MessageDaySeperator from "./messageDaySeperator";
 import Message from "./message";
 import { Chat } from "@/app/classes/chats";
 import { Message as MessageC, msgDisplayType } from "@/app/classes/messages";
-import { GetFancyDate } from "../util/functions";
+import { GetFancyDate } from "../../functions/functions";
 import NewMessageSeperator from "./newMessageSeperator";
 import { useEffect } from "react";
 

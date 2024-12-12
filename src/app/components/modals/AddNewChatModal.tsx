@@ -1,15 +1,15 @@
 import ChatWindowModal from "./ChatWindowModal";
 import TextInput from "../textInput";
-import Button from "../button";
+import Button from "../buttons/button";
 import Image from "next/image";
 import { useState, ChangeEvent, KeyboardEvent, useContext } from "react";
 import { chatRepository } from "@/app/app/page";
 import { GroupChat, UserChat } from "@/app/classes/chats";
-import { CurrentUserContext } from "../context/currentUserContext";
-import { UserRepositoryContext } from "../context/userRepositoryContext";
+import { CurrentUserContext } from "../../context/currentUserContext";
+import { UserRepositoryContext } from "../../context/userRepositoryContext";
 import FriendCloseableTextBubble from "../FriendCloseableTextBubble";
 import InvisibleTextBubble from "../InvisibleTextBubble";
-import ProfilePhoto from "../profilePhoto";
+import ProfilePhoto from "../photo/profilePhoto";
 
 
 export default function AddNewChatModal({open, setOpen, chatGroups, chatGroupsUpdater, sendWSMessage, inputFriends}: {open: boolean, setOpen: Function, chatGroups:chatRepository, chatGroupsUpdater: Function, sendWSMessage: Function, inputFriends: Array<string>}) {

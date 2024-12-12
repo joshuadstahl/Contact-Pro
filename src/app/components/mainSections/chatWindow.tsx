@@ -1,16 +1,16 @@
 'use client'
 import React, {KeyboardEvent, MouseEvent, useContext, useEffect, useState} from 'react';
-import { BlankChat, GroupChat, UserChat } from '../classes/chats';
-import { Message as MessageClass, msgType } from '../classes/messages';
-import ProfilePhoto from './profilePhoto';
+import { BlankChat, GroupChat, UserChat } from '../../classes/chats';
+import { Message as MessageClass, msgType } from '../../classes/messages';
+import ProfilePhoto from '../photo/profilePhoto';
 import Image from 'next/image';
-import MessageDisplayWrapper from './messageComponents/messageDisplayWrapper';
-import { GetColorBgClass, GetStatusName } from './util/functions';
-import { chatRepository, friendRequestRepository, userRepository } from '../app/page';
-import { CurrentUserContext } from './context/currentUserContext';
-import ChatWindowModal from './modals/ChatWindowModal';
-import AddNewChatModal from './modals/AddNewChatModal';
-import AddNewFriendRequestModal from './modals/AddNewFriendRequestModal';
+import MessageDisplayWrapper from '../messageComponents/messageDisplayWrapper';
+import { GetColorBgClass, GetStatusName } from '../../functions/functions';
+import { chatRepository, friendRequestRepository, userRepository } from '../../app/page';
+import { CurrentUserContext } from '../../context/currentUserContext';
+import ChatWindowModal from '../modals/ChatWindowModal';
+import AddNewChatModal from '../modals/AddNewChatModal';
+import AddNewFriendRequestModal from '../modals/AddNewFriendRequestModal';
 
 
 function ChatWindow({chatID, userRepo, sendWSMessage, addNewMessage, chatGroups, chatGroupsUpdater, oldestUnreadMessageID, 

@@ -2,7 +2,7 @@ import { auth } from "@/auth";
 import {Collection, Db, MongoClient} from "mongodb";
 import { NextRequest, NextResponse } from "next/server";
 import { ServerUser } from "@/app/classes/serverUser";
-import { CreateDbConnection, GetOrCreateWSAuthToken } from "@/app/components/util/serverFunctions";
+import { CreateDbConnection, GetOrCreateWSAuthToken } from "@/app/functions/serverFunctions";
 
 export const GET = async function GET(req: NextRequest) {
     let session = await auth();

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import CloseableTextBubble from "./ClosableTextBubble";
-import ProfilePhoto from "./profilePhoto";
+import ProfilePhoto from "./photo/profilePhoto";
 
 
 export default function FriendCloseableTextBubble({name, username, photo, className, xCallback} : {name: string, username: string, photo: string, className?:String, xCallback: Function}) {

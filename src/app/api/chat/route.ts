@@ -3,7 +3,7 @@ import { auth } from "@/auth";
 import { MongoClient, Db, Collection, ObjectId } from "mongodb";
 import { ServerUser } from "@/app/classes/serverUser";
 import { ServerChat } from "@/app/classes/serverChats";
-import { randomUsername } from "@/app/components/util/functions";
+import { randomUsername } from "@/app/functions/functions";
 
 export const POST = async function(req: Request) {
 

@@ -1,9 +1,9 @@
 import { useState, ChangeEvent, useContext } from "react";
 import { User } from "@/app/classes/user";
 import FullScreenModal from "./fullScreenModal";
-import Button from "../button";
+import Button from "../buttons/button";
 import { userRepository } from "@/app/app/page";
-import { randomUsername } from "../util/functions";
+import { randomUsername } from "../../functions/functions";
 
 
 

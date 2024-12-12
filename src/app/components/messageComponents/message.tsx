@@ -1,10 +1,10 @@
 import React, { useContext } from "react";
 import { Message as MessageClass, msgDisplayType } from "@/app/classes/messages";
-import ProfilePhoto from "../profilePhoto";
+import ProfilePhoto from "../photo/profilePhoto";
 import MsgStatus from "./msgStatus";
-import { CurrentUserContext } from "../context/currentUserContext";
-import { UserRepositoryContext } from "../context/userRepositoryContext";
-import { GetFancyDate } from "../util/functions";
+import { CurrentUserContext } from "../../context/currentUserContext";
+import { UserRepositoryContext } from "../../context/userRepositoryContext";
+import { GetFancyDate } from "../../functions/functions";
 
 
 export default function Message({theMessage, type, messageResendCallback} : {theMessage: MessageClass, type: msgDisplayType, messageResendCallback: (msg: MessageClass) => {}}) {

@@ -1,7 +1,7 @@
 import { ServerUser } from "./serverUser";
 import { Message, msgStatusEnum, msgType } from "./messages";
 import { ObjectId } from "mongodb";
-import { getMostRecentStatus } from "../components/util/functions";
+import { getMostRecentStatus } from "../functions/functions";
 
 
 export interface iRecipientStatuses {
