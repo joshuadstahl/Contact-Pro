@@ -1,4 +1,5 @@
 'use client'
+import "./globals.css";
 import Image from "next/image";
 import Sidebar from '../components/mainSections/sidebar';
 import Navbar from "../components/mainSections/navbar";
