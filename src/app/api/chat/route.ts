@@ -118,6 +118,11 @@ export const GET = async function(req: NextRequest) {
 
             let user = await userCollection.findOne<ServerUser>({email: session?.user?.email});
 
+            if (user === null) {
+                await client.close();
+                return NextResponse.json({ message: "Not authenticated" }, { status: 401 });
+            }
+
             const chatDb: Db = client.db(process.env.DB_NAME ?? "");
 
             const chatCollection: Collection<ServerChat> = chatDb.collection<ServerChat>("chats");
@@ -127,11 +132,6 @@ export const GET = async function(req: NextRequest) {
                 console.log(chat);
                 await client.close();
                 return NextResponse.json({ message: "Chat does not exist" }, { status: 404 });
-            }
-
-            if (user === null) {
-                await client.close();
-                return NextResponse.json({ message: "Failed to fetch user." }, { status: 500 });
             }
 
             //make sure the current user is a member in the group
