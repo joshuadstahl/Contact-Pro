@@ -43,7 +43,7 @@ export const GET = async function GET() {
                 newUser: signUp
             };
 
-            client.close();
+            await client.close();
 
             return NextResponse.json(out);
         } catch (err) {

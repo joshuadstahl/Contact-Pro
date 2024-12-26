@@ -146,7 +146,7 @@ export const POST = async function(req: Request) {
                         let verified = await newM.verify(currUserID, db);
                         if (verified) {
                             let newID = await newM.submit(currUserID, db);
-							client.close();
+							await client.close();
                             if (newID !== false) {
                                 let res = await sendWSMessage({msgType: "message", data: {
 									_id: newID,
@@ -160,22 +160,27 @@ export const POST = async function(req: Request) {
 									members: newM.chat?.members ?? []
 								}});
 
+								await client.close();
 								return NextResponse.json({ message: "Successfully created message.", data: {_id: newID}}, { status: 201 });
                             }
                             else {
+								await client.close();
                                 return NextResponse.json({ message: "Unable to create message."}, { status: 500 });
                             }
 
                         }
                         else {
+							await client.close();
                             return NextResponse.json({ message: "Incorrect fields provided in the body or fields missing."}, { status: 400 });
                         }
                     }
                     catch (err) {
+						await client.close();
                         return NextResponse.json({ message: "Unable to create message.", err:{err}}, { status: 500 });
                     }
                 }
                 else {
+					await client.close();
                     return NextResponse.json({ message: "Unable to retrieve current user."}, { status: 500 });
                 }
 

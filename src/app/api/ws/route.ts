@@ -14,6 +14,7 @@ export const GET = async function GET(req: NextRequest) {
         let user = await userCollection.findOne<ServerUser>({email: session?.user?.email});
 
         if (user === null) {
+            await client.close();
             return NextResponse.json({ message: "No account" }, { status: 403 })
         }
 
@@ -24,7 +25,7 @@ export const GET = async function GET(req: NextRequest) {
             addr: process.env.WS_CONNECT_ADDR
         }
 
-        client.close();
+        await client.close();
 
         return NextResponse.json(out);
     }

@@ -24,6 +24,7 @@ export const GET = async function GET() {
         let signUp = false;
         if (user === null) {
             console.log("no user!");
+            await client.close();
             return NextResponse.json({ message: "Not authenticated" }, { status: 401 });
         }
         else {
@@ -55,8 +56,7 @@ export const GET = async function GET() {
             chats: chatsOut
         };
 
-        client.close();
-
+        await client.close();
         return NextResponse.json(out, {status: 200});
     }
     return NextResponse.json({ message: "Not authenticated" }, { status: 401 })

@@ -80,7 +80,7 @@ export async function GetOrCreateWSAuthToken(db: Db, userID: string, ConnectingI
         
 //         let [db, client] = await CreateDbConnection();
 //         let authHash = await GetOrCreateWSAuthToken(db, "HTTPAPI-CLIENT", "localhost");
-//         client.close();
+//         await client.close();
 
 //         //console.log((process.env.WS_CONNECT_ADDR ?? "") + authHash);
 
@@ -130,7 +130,7 @@ export async function sendWSMessage(message: object, expectedRespMessage: string
         
         let [db, client] = await CreateDbConnection();
         let authHash = await GetOrCreateWSAuthToken(db, "HTTPAPI-CLIENT", "localhost");
-        client.close();
+        await client.close();
 
         console.log((process.env.WS_CONNECT_ADDR ?? "") + authHash);
 
@@ -181,11 +181,11 @@ export async function getUserIDfromUsername(username: string): Promise<string|un
     let doc = await userCollection.findOne({username: username})
 
     if (doc === null) {
-        client.close()
+        await client.close();
         return undefined;
     }
     else {
-        client.close()
+        await client.close();
         return doc._id.toString();
     }
     

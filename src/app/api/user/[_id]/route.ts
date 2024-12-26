@@ -24,6 +24,7 @@ export const GET = async function GET(req: Request, props: { params: Promise<{ _
 
         if (user === null) {
             console.log("no user!");
+            await client.close();
             return NextResponse.json({ message: "Not authenticated" }, { status: 401 });
         }
         else {
@@ -35,12 +36,13 @@ export const GET = async function GET(req: Request, props: { params: Promise<{ _
                 outUser = new ServerUser(fetchedUser).export(user._id);
             }
             else {
+                await client.close();
                 return NextResponse.json({ message: "User not found" }, { status: 400 })
             }
             
         }
 
-        client.close();
+        await client.close();
 
         return NextResponse.json(outUser, {status: 200});
     }

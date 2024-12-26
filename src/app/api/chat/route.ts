@@ -27,12 +27,14 @@ export const POST = async function(req: Request) {
                         friends = user.friends;
                     }
                     else {
+                        await client.close();
                         return NextResponse.json({ message: "Failed to fetch user." }, { status: 500 });
                     }
 
                     //the members of the chat should be the user's friends, so if the 
                     //number of the users' friends is zero, return an error.
                     if (friends.length == 0) {
+                        await client.close();
                         return NextResponse.json({ message: "Can't create chat with members that are not friends." }, { status: 400 });
                     }
 
@@ -40,6 +42,7 @@ export const POST = async function(req: Request) {
                     for (let i = 0; i < body.members.length; i++) {
                         let member = body.members[i];
                         if (!friends.find((str) => str == member)) {
+                            await client.close();
                             return NextResponse.json({ message: "Can't create chat with members that are not friends." }, { status: 400 });
                         }
                     }
@@ -76,6 +79,7 @@ export const POST = async function(req: Request) {
                         name: chatName
                     }
 
+                    await client.close();
                     return NextResponse.json(out, { status: 200 });
 
                 }
@@ -121,21 +125,25 @@ export const GET = async function(req: NextRequest) {
 
             if (chat === null) {
                 console.log(chat);
+                await client.close();
                 return NextResponse.json({ message: "Chat does not exist" }, { status: 404 });
             }
 
             if (user === null) {
+                await client.close();
                 return NextResponse.json({ message: "Failed to fetch user." }, { status: 500 });
             }
 
             //make sure the current user is a member in the group
             if (!chat.members.find((mbr) => mbr._id.toString() == user._id.toString())) {
+                await client.close();
                 return NextResponse.json({ message: "You're not a member of the chat" }, { status: 400 });
             }
 
             let temp = new ServerChat({...chat, accessingUser: user._id.toString()});
             let out = temp.export(user._id.toString());
 
+            await client.close();
             return NextResponse.json(out, { status: 200 });
         }
     } catch (err) {

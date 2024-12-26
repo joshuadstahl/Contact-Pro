@@ -17,6 +17,7 @@ export const PUT = async function PUT(req: NextRequest) {
 
         let signUp = false;
         if (user === null) {
+            await client.close();
             return NextResponse.json({ message: "No account" }, { status: 403 })
         }
 
@@ -27,19 +28,19 @@ export const PUT = async function PUT(req: NextRequest) {
                 let lookup = await userCollection.findOne<User>({username: body.username});
                 if (lookup === null) {
                     await userCollection.updateOne({username: user.username}, {$set: {username: body.username}});
-                    client.close();
+                    await client.close();
                     return NextResponse.json({ message: "Success"}, {status: 200});
                 }
                 else {
-                    client.close();
+                    await client.close();
                     return NextResponse.json({ message: "Username taken"}, {status: 403});
                 }
             }
-            client.close();
+            await client.close();
             return NextResponse.json({ message: "Success"}, {status: 200});
         }
         else {
-            client.close();
+            await client.close();
             return NextResponse.json({ message: "No username in body" }, { status: 403 })
         }
 

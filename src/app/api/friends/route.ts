@@ -19,7 +19,7 @@ export const GET = async function GET() {
 
             if (user === null) {
                 console.log("no user!");
-                client.close();
+                await client.close();
                 return NextResponse.json({ message: "Not authenticated" }, { status: 401 });
             }
             else {
@@ -40,7 +40,7 @@ export const GET = async function GET() {
                     friends: newFriends,
                 };
 
-                client.close();
+                await client.close();
 
                 return NextResponse.json(out);
             }

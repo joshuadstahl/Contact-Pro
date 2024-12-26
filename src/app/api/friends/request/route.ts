@@ -21,14 +21,14 @@ export const POST = async function POST(req: NextRequest) {
 
                 if (user === null) {
                     console.log("no user!");
-                    client.close();
+                    await client.close();
                     return NextResponse.json({ message: "Not authenticated" }, { status: 401 });
                 }
                 else {
 
                     //make sure a user id was included in the body.
                     if (body.id === undefined || body.id == "") {
-                        client.close();
+                        await client.close();
                         return NextResponse.json({ message: "No user id received." }, { status: 400 });
                     }
 
@@ -36,7 +36,7 @@ export const POST = async function POST(req: NextRequest) {
                     let targetID = new ObjectId(String(body.id));
                     for (let i = 0; i < user.friends.length; i++) {
                         if (targetID.equals(user.friends[i])) {
-                            client.close();
+                            await client.close();
                             return NextResponse.json({ message: "User is already a friend." }, { status: 400 });
                         }
                     }
@@ -44,7 +44,7 @@ export const POST = async function POST(req: NextRequest) {
                     //make sure the submitted userID exists.
                     let userCheck = await userCollection.findOne<ServerUser>({_id: new ObjectId(String(body.id))});
                     if (userCheck === null) {
-                        client.close();
+                        await client.close();
                         return NextResponse.json({ message: "User does not exist." }, { status: 400 });
                     }
 
@@ -58,14 +58,14 @@ export const POST = async function POST(req: NextRequest) {
 
                     //if there is success, then there is a friends request that already exists.
                     if (duplicate !== null) {
-                        client.close();
+                        await client.close();
                         return NextResponse.json({ message: "Similar friend request already exists." }, { status: 400 });
                     }
 
                     //create friend request.
                     let res = await friendRequestsCollection.insertOne({sender: new ObjectId(user._id.toString()), timestamp: new Date(), recipient: new ObjectId(String(body.id.toString()))})
 
-                    client.close();
+                    await client.close();
 
                     if (res.acknowledged) {
                         //notify websocket server of updates
@@ -77,9 +77,11 @@ export const POST = async function POST(req: NextRequest) {
                             timestamp: new Date()
                         }})
 
+                        await client.close();
                         return NextResponse.json({msg: "Friend request successfully created.", data: {id: res.insertedId}}, {status: 201});
                     }
                     else {
+                        await client.close();
                         return NextResponse.json({msg: "Unable to create friend request"}, {status: 500});
                     }
                     
@@ -114,26 +116,26 @@ export const PATCH = async function PATCH(req: NextRequest) {
 
                 if (user === null) {
                     console.log("no user!");
-                    client.close();
+                    await client.close();
                     return NextResponse.json({ message: "Not authenticated" }, { status: 401 });
                 }
                 else {
                     //make sure a friend request id was included in the body.
                     if (body.id === undefined || body.id == "") {
-                        client.close();
+                        await client.close();
                         return NextResponse.json({ message: "No friend request id received." }, { status: 400 });
                     }
 
                     //make sure an action was included in the body.
                     if (body.action === undefined || body.action == "") {
-                        client.close();
+                        await client.close();
                         return NextResponse.json({ message: "No action received." }, { status: 400 });
                     }
 
                     //make sure action is one of the predefined values.
                     let action = body.action.toString().toLowerCase();
                     if (action != "accept" && action != "reject" && action != "cancel") {
-                        client.close();
+                        await client.close();
                         return NextResponse.json({ message: "Invalid action." }, { status: 400 });
                     }
 
@@ -143,7 +145,7 @@ export const PATCH = async function PATCH(req: NextRequest) {
 
                     //if the friend request id does not exist, throw error.
                     if (friendRequest === null) {
-                        client.close();
+                        await client.close();
                         return NextResponse.json({ message: "Invalid friend request id." }, { status: 400 });
                     }
 
@@ -151,7 +153,7 @@ export const PATCH = async function PATCH(req: NextRequest) {
                     let targetID = new ObjectId(friendRequest.sender.toString() == user._id.toString() ? friendRequest.recipient.toString() : friendRequest.sender.toString()); //the user id of the other user in the friend request.
                     for (let i = 0; i < user.friends.length; i++) {
                         if (targetID.equals(user.friends[i])) {
-                            client.close();
+                            await client.close();
                             return NextResponse.json({ message: "User is already a friend." }, { status: 400 });
                         }
                     }
@@ -162,7 +164,7 @@ export const PATCH = async function PATCH(req: NextRequest) {
 
                         //check permissions
                         if (friendRequest.recipient.toString() != user._id.toString()) {
-                            client.close();
+                            await client.close();
                             return NextResponse.json({ message: "Unauthorized to perform this action on this friend request." }, { status: 403 });
                         }
                    
@@ -216,7 +218,7 @@ export const PATCH = async function PATCH(req: NextRequest) {
                     else {
                         //check permissions
                         if (friendRequest.sender.toString() != user._id.toString()) {
-                            client.close();
+                            await client.close();
                             return NextResponse.json({ message: "Unauthorized to perform this action on this friend request." }, { status: 403 });
                         }
 
@@ -233,7 +235,7 @@ export const PATCH = async function PATCH(req: NextRequest) {
                         let res = await friendRequestsCollection.deleteOne({_id: new ObjectId(String(body.id.toString()))}); //delete the request in the database.
                     }
 
-                    client.close();
+                    await client.close();
 
                     if (newID != "") {
                         return NextResponse.json({msg: "Successfully accepted friend request.", data: {newChatID: newID} }, {status: 201});
