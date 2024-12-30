@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import { User } from "@/app/classes/user";
 import { ServerChat } from "@/app/classes/serverChats";
 import { Chat } from "@/app/classes/chats";
+import { CreateDbConnection } from "@/app/functions/serverFunctions";
 
 
 //this sends out the chats for a user
@@ -11,9 +12,7 @@ export const GET = async function GET() {
     let session = await auth();
     if (session) {
         //let session = req.auth;
-        const client: MongoClient = new MongoClient(process.env.DB_CONN_STRING ?? "");
-        await client.connect();
-        const db: Db = client.db(process.env.DB_NAME ?? "");
+        const [db, client] = await CreateDbConnection();
 
         const userCollection: Collection = db.collection("users");
 
@@ -27,8 +26,7 @@ export const GET = async function GET() {
             return NextResponse.json({ message: "Unauthorized. No account exists." }, { status: 401 })
         }
 
-        const chatDb: Db = client.db(process.env.DB_NAME ?? "");
-        const chatCollection: Collection<ServerChat> = chatDb.collection<ServerChat>("chats");
+        const chatCollection: Collection<ServerChat> = db.collection<ServerChat>("chats");
         let chats = chatCollection.find<ServerChat>({membersArray: new ObjectId(user._id)}).project(
             {
                 _id: 1,

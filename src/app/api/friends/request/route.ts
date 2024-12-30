@@ -3,7 +3,7 @@ import {Collection, Db, MongoClient, ObjectId, PushOperator, Timestamp } from "m
 import { NextRequest, NextResponse } from "next/server";
 import { ServerUser } from "@/app/classes/serverUser";
 import { RawServerFriendRequest } from "@/app/classes/serverFriendRequests";
-import { sendWSMessage } from "@/app/functions/serverFunctions";
+import { CreateDbConnection, sendWSMessage } from "@/app/functions/serverFunctions";
 
 export const POST = async function POST(req: NextRequest) {
     try {
@@ -11,9 +11,7 @@ export const POST = async function POST(req: NextRequest) {
         if (session) {
             let body =  await req.json();
             if (body !== undefined) {
-                const client: MongoClient = new MongoClient(process.env.DB_CONN_STRING ?? "");
-                await client.connect();
-                const db: Db = client.db(process.env.DB_NAME ?? "");
+                const [db, client] = await CreateDbConnection();
 
                 const userCollection: Collection = db.collection("users");
 
@@ -102,9 +100,7 @@ export const PATCH = async function PATCH(req: NextRequest) {
         if (session) {
             let body =  await req.json();
             if (body !== undefined) {
-                const client: MongoClient = new MongoClient(process.env.DB_CONN_STRING ?? "");
-                await client.connect();
-                const db: Db = client.db(process.env.DB_NAME ?? "");
+                const [db, client] = await CreateDbConnection();
 
                 const userCollection: Collection = db.collection("users");
 

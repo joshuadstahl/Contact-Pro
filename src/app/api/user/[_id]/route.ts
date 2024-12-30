@@ -3,6 +3,7 @@ import { MongoClient, Collection, Db, ObjectId } from "mongodb";
 import { NextRequest, NextResponse } from "next/server";
 import { User } from "@/app/classes/user";
 import { ServerUser } from "@/app/classes/serverUser";
+import { CreateDbConnection } from "@/app/functions/serverFunctions";
 
 
 //this sends out the chats for a user
@@ -12,9 +13,7 @@ export const GET = async function GET(req: Request, props: { params: Promise<{ _
     //make sure there is a valid session
     let session = await auth();
     if (session) {
-        const client: MongoClient = new MongoClient(process.env.DB_CONN_STRING ?? "");
-        await client.connect();
-        const db: Db = client.db(process.env.DB_NAME ?? "");
+        const [db, client] = await CreateDbConnection();
 
         const userCollection: Collection = db.collection("users");
 

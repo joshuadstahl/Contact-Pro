@@ -3,15 +3,14 @@ import { auth } from "@/auth";
 import {Collection, Db, MongoClient, ObjectId } from "mongodb";
 import { NextResponse } from "next/server";
 import { ServerUser } from "@/app/classes/serverUser";
+import { CreateDbConnection } from "@/app/functions/serverFunctions";
 
 
 export const GET = async function GET() {
     let session = await auth();
     if (session) {
         try {
-            const client: MongoClient = new MongoClient(process.env.DB_CONN_STRING ?? "");
-            await client.connect();
-            const db: Db = client.db(process.env.DB_NAME ?? "");
+            const [db, client] = await CreateDbConnection();
 
             const userCollection: Collection = db.collection("users");
 

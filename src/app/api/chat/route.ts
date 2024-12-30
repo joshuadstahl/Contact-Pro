@@ -4,6 +4,7 @@ import { MongoClient, Db, Collection, ObjectId } from "mongodb";
 import { ServerUser } from "@/app/classes/serverUser";
 import { ServerChat } from "@/app/classes/serverChats";
 import { randomUsername } from "@/app/functions/functions";
+import { CreateDbConnection } from "@/app/functions/serverFunctions";
 
 export const POST = async function(req: Request) {
 
@@ -13,9 +14,7 @@ export const POST = async function(req: Request) {
             let body =  await req.json();
             if (body !== undefined) {
                 if (body.members !== undefined && body.members.length != 0) {
-                    const client: MongoClient = new MongoClient(process.env.DB_CONN_STRING ?? "");
-                    await client.connect();
-                    const db: Db = client.db(process.env.DB_NAME ?? "");
+                    const [db, client] = await CreateDbConnection();
 
                     const userCollection: Collection = db.collection("users");
 
@@ -115,9 +114,7 @@ export const GET = async function(req: NextRequest) {
             console.log(id);
             
 
-            const client: MongoClient = new MongoClient(process.env.DB_CONN_STRING ?? "");
-            await client.connect();
-            const db: Db = client.db(process.env.DB_NAME ?? "");
+            const [db, client] = await CreateDbConnection();
 
             const userCollection: Collection = db.collection("users");
 

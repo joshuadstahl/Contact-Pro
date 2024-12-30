@@ -1,4 +1,5 @@
 import { User, userStatus } from "@/app/classes/user";
+import { CreateDbConnection } from "@/app/functions/serverFunctions";
 import { auth } from "@/auth";
 import {Collection, Db, MongoClient } from "mongodb";
 import { NextRequest, NextResponse } from "next/server";
@@ -7,9 +8,7 @@ export const PUT = async function PUT(req: NextRequest) {
     
     let session = await auth();
     if (session) {
-        const client: MongoClient = new MongoClient(process.env.DB_CONN_STRING ?? "");
-        await client.connect();
-        const db: Db = client.db(process.env.DB_NAME ?? "");
+        const [db, client] = await CreateDbConnection();
 
         const userCollection: Collection = db.collection("users");
 
