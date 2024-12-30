@@ -23,33 +23,29 @@ export const GET = async function GET() {
 
         let signUp = false;
         if (user === null) {
-            console.log("no user!");
             await client.close();
-            return NextResponse.json({ message: "Not authorized" }, { status: 401 });
+            return NextResponse.json({ message: "Unauthorized. No account exists." }, { status: 401 })
         }
-        else {
-            const chatDb: Db = client.db(process.env.DB_NAME ?? "");
-            const chatCollection: Collection<ServerChat> = chatDb.collection<ServerChat>("chats");
-            let chats = chatCollection.find<ServerChat>({membersArray: new ObjectId(user._id)}).project(
-                {
-                    _id: 1,
-                    chatType: 1,
-                    members: 1,
-                    photo: 1,
-                    name: 1,
-                    membersArray: 1,
-                    messages: 1,
-                    recipientStatuses: 1,
-                    accessingUser: user._id.toString()
-                }
-            )
 
-            for await (const doc of chats) {
-                let temp = new ServerChat(doc as ServerChat);
-                chatsOut.push(temp.export(user._id.toString()));
+        const chatDb: Db = client.db(process.env.DB_NAME ?? "");
+        const chatCollection: Collection<ServerChat> = chatDb.collection<ServerChat>("chats");
+        let chats = chatCollection.find<ServerChat>({membersArray: new ObjectId(user._id)}).project(
+            {
+                _id: 1,
+                chatType: 1,
+                members: 1,
+                photo: 1,
+                name: 1,
+                membersArray: 1,
+                messages: 1,
+                recipientStatuses: 1,
+                accessingUser: user._id.toString()
             }
+        )
 
-            
+        for await (const doc of chats) {
+            let temp = new ServerChat(doc as ServerChat);
+            chatsOut.push(temp.export(user._id.toString()));
         }
 
         let out = {

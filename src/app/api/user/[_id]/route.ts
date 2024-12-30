@@ -23,23 +23,19 @@ export const GET = async function GET(req: Request, props: { params: Promise<{ _
         let outUser = new Object;
 
         if (user === null) {
-            console.log("no user!");
             await client.close();
-            return NextResponse.json({ message: "Not authorized" }, { status: 401 });
+            return NextResponse.json({ message: "Unauthorized. No account exists." }, { status: 401 })
+        }
+
+        //const userCollection: Collection<ServerChat> = db.collection<ServerChat>("users");
+        let fetchedUser = await userCollection.findOne<ServerUser>({_id: new ObjectId(params._id ?? "")});
+
+        if (fetchedUser !== null) {
+            outUser = new ServerUser(fetchedUser).export(user._id);
         }
         else {
-            
-            //const userCollection: Collection<ServerChat> = db.collection<ServerChat>("users");
-            let fetchedUser = await userCollection.findOne<ServerUser>({_id: new ObjectId(params._id ?? "")});
-
-            if (fetchedUser !== null) {
-                outUser = new ServerUser(fetchedUser).export(user._id);
-            }
-            else {
-                await client.close();
-                return NextResponse.json({ message: "User not found" }, { status: 404 })
-            }
-            
+            await client.close();
+            return NextResponse.json({ message: "User not found" }, { status: 404 })
         }
 
         await client.close();
