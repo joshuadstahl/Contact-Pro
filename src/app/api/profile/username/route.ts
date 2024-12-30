@@ -33,7 +33,7 @@ export const PUT = async function PUT(req: NextRequest) {
                 }
                 else {
                     await client.close();
-                    return NextResponse.json({ message: "Action forbidden. Username already taken."}, {status: 403});
+                    return NextResponse.json({ message: "Username already taken."}, {status: 409});
                 }
             }
             await client.close();
