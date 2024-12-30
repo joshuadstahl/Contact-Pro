@@ -25,7 +25,7 @@ export const GET = async function GET() {
         if (user === null) {
             console.log("no user!");
             await client.close();
-            return NextResponse.json({ message: "Not authenticated" }, { status: 401 });
+            return NextResponse.json({ message: "Not authorized" }, { status: 401 });
         }
         else {
             const chatDb: Db = client.db(process.env.DB_NAME ?? "");
@@ -59,5 +59,5 @@ export const GET = async function GET() {
         await client.close();
         return NextResponse.json(out, {status: 200});
     }
-    return NextResponse.json({ message: "Not authenticated" }, { status: 401 })
+    return NextResponse.json({ message: "Not authorized" }, { status: 401 })
 }

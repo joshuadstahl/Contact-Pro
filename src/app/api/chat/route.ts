@@ -93,7 +93,7 @@ export const POST = async function(req: Request) {
         return NextResponse.json({ message: "Unable to create chat.", err:{err}}, { status: 500 });
     }
     
-    return NextResponse.json({ message: "Not authenticated" }, { status: 401 })
+    return NextResponse.json({ message: "Not authorized" }, { status: 401 })
 }
 
 export const GET = async function(req: NextRequest) {
@@ -120,7 +120,7 @@ export const GET = async function(req: NextRequest) {
 
             if (user === null) {
                 await client.close();
-                return NextResponse.json({ message: "Not authenticated" }, { status: 401 });
+                return NextResponse.json({ message: "Not authorized" }, { status: 401 });
             }
 
             const chatDb: Db = client.db(process.env.DB_NAME ?? "");
@@ -137,7 +137,7 @@ export const GET = async function(req: NextRequest) {
             //make sure the current user is a member in the group
             if (!chat.members.find((mbr) => mbr._id.toString() == user._id.toString())) {
                 await client.close();
-                return NextResponse.json({ message: "You're not a member of the chat" }, { status: 400 });
+                return NextResponse.json({ message: "Action forbidden. You're not a member of the chat" }, { status: 403 });
             }
 
             let temp = new ServerChat({...chat, accessingUser: user._id.toString()});
@@ -151,5 +151,5 @@ export const GET = async function(req: NextRequest) {
         return NextResponse.json({ message: "Unable to get chat.", err:{err}}, { status: 500 });
     }
     
-    return NextResponse.json({ message: "Not authenticated" }, { status: 401 })
+    return NextResponse.json({ message: "Not authorized" }, { status: 401 })
 }

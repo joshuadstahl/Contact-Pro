@@ -19,7 +19,7 @@ export const GET = async function GET() {
             if (user === null) {
                 console.log("no user!");
                 await client.close();
-                return NextResponse.json({ message: "Not authenticated" }, { status: 401 });
+                return NextResponse.json({ message: "Not authorized" }, { status: 401 });
             }
             else {
 
@@ -51,5 +51,5 @@ export const GET = async function GET() {
         }
         
     }
-    return NextResponse.json({ message: "Not authenticated" }, { status: 401 });
+    return NextResponse.json({ message: "Not authorized" }, { status: 401 });
 }

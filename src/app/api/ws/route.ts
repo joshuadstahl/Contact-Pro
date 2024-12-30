@@ -15,7 +15,7 @@ export const GET = async function GET(req: NextRequest) {
 
         if (user === null) {
             await client.close();
-            return NextResponse.json({ message: "No account" }, { status: 403 })
+            return NextResponse.json({ message: "Unauthorized. No account exists." }, { status: 401 })
         }
 
         let authHash = await GetOrCreateWSAuthToken(db, user._id.toString(), req.headers.get("x-forwarded-for"));
@@ -29,5 +29,5 @@ export const GET = async function GET(req: NextRequest) {
 
         return NextResponse.json(out);
     }
-    return NextResponse.json({ message: "Not authenticated" }, { status: 401 })
+    return NextResponse.json({ message: "Not authorized" }, { status: 401 })
 }

@@ -22,7 +22,7 @@ export const POST = async function POST(req: NextRequest) {
                 if (user === null) {
                     console.log("no user!");
                     await client.close();
-                    return NextResponse.json({ message: "Not authenticated" }, { status: 401 });
+                    return NextResponse.json({ message: "Not authorized" }, { status: 401 });
                 }
                 else {
 
@@ -97,7 +97,7 @@ export const POST = async function POST(req: NextRequest) {
         return NextResponse.json({ message: "Unable to create friend request.", err:{err}}, { status: 500 });
     }
     
-    return NextResponse.json({ message: "Not authenticated" }, { status: 401 });
+    return NextResponse.json({ message: "Not authorized" }, { status: 401 });
 }
 
 export const PATCH = async function PATCH(req: NextRequest) {
@@ -117,7 +117,7 @@ export const PATCH = async function PATCH(req: NextRequest) {
                 if (user === null) {
                     console.log("no user!");
                     await client.close();
-                    return NextResponse.json({ message: "Not authenticated" }, { status: 401 });
+                    return NextResponse.json({ message: "Not authorized" }, { status: 401 });
                 }
                 else {
                     //make sure a friend request id was included in the body.
@@ -219,7 +219,7 @@ export const PATCH = async function PATCH(req: NextRequest) {
                         //check permissions
                         if (friendRequest.sender.toString() != user._id.toString()) {
                             await client.close();
-                            return NextResponse.json({ message: "Unauthorized to perform this action on this friend request." }, { status: 403 });
+                            return NextResponse.json({ message: "Forbidden to perform this action on this friend request." }, { status: 403 });
                         }
 
                         //notify websocket server of updates
@@ -257,5 +257,5 @@ export const PATCH = async function PATCH(req: NextRequest) {
         return NextResponse.json({ message: "Unable to create friend request.", err:{err}}, { status: 500 });
     }
     
-    return NextResponse.json({ message: "Not authenticated" }, { status: 401 });
+    return NextResponse.json({ message: "Not authorized" }, { status: 401 });
 }

@@ -171,7 +171,7 @@ export const POST = async function(req: Request) {
                         }
                         else {
 							await client.close();
-                            return NextResponse.json({ message: "Incorrect fields provided in the body or fields missing."}, { status: 400 });
+                            return NextResponse.json({ message: "Action forbidden. User not a part of the submitted chat."}, { status: 403 });
                         }
                     }
                     catch (err) {
@@ -191,5 +191,5 @@ export const POST = async function(req: Request) {
         return NextResponse.json({ message: "Unable to create message.", err:{err}}, { status: 500 });
     }
 
-    return NextResponse.json({ message: "Not authenticated" }, { status: 401 })
+    return NextResponse.json({ message: "Not authorized" }, { status: 401 })
 }

@@ -543,7 +543,7 @@ export default function App() {
 
 	//handle the chats data
     if (chats.data !== undefined && !chatGroupsLoaded) {
-        if (chats.data.message != "Not authenticated" && chats.data.chats.length !== undefined && chats.data.chats.length != 0) {
+        if (chats.data.message != "Not authorized" && chats.data.chats.length !== undefined && chats.data.chats.length != 0) {
             let cg2 = {...chatGroups};
             let userRepoCopy: userRepository = {...userRepo}; //what is going to update the user repository
             chats.data.chats.forEach((chat: {

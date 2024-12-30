@@ -18,7 +18,7 @@ export const PUT = async function PUT(req: NextRequest) {
         let signUp = false;
         if (user === null) {
             await client.close();
-            return NextResponse.json({ message: "No account" }, { status: 403 })
+            return NextResponse.json({ message: "Unauthorized. No account exists." }, { status: 401 })
         }
 
         let body = await req.json();
@@ -33,7 +33,7 @@ export const PUT = async function PUT(req: NextRequest) {
                 }
                 else {
                     await client.close();
-                    return NextResponse.json({ message: "Username taken"}, {status: 403});
+                    return NextResponse.json({ message: "Action forbidden. Username already taken."}, {status: 403});
                 }
             }
             await client.close();
@@ -41,9 +41,9 @@ export const PUT = async function PUT(req: NextRequest) {
         }
         else {
             await client.close();
-            return NextResponse.json({ message: "No username in body" }, { status: 403 })
+            return NextResponse.json({ message: "No username in body" }, { status: 400 })
         }
 
     }
-    return NextResponse.json({ message: "Not authenticated" }, { status: 401 })
+    return NextResponse.json({ message: "Not authorized" }, { status: 401 })
 }
