@@ -17,33 +17,29 @@ export const GET = async function GET() {
             let user = await userCollection.findOne<ServerUser>({email: session?.user?.email});
 
             if (user === null) {
-                console.log("no user!");
                 await client.close();
-                return NextResponse.json({ message: "Not authorized" }, { status: 401 });
+                return NextResponse.json({ message: "Unauthorized. No account exists." }, { status: 401 })
             }
-            else {
-
-                const friendRequestsCollection : Collection = db.collection("friendRequests");
+            
+            const friendRequestsCollection : Collection = db.collection("friendRequests");
                 
-                let friendRequests = friendRequestsCollection.find<ServerFriendRequest>({$or: [{"recipient._id": new ObjectId(user._id.toString())}, {"sender._id": new ObjectId(user._id.toString())}]});
+            let friendRequests = friendRequestsCollection.find<ServerFriendRequest>({$or: [{"recipient._id": new ObjectId(user._id.toString())}, {"sender._id": new ObjectId(user._id.toString())}]});
 
 
-                let newFriendRequests : Array<ServerFriendRequest> = []; //a new array of friend requests from the friend requests objects from the database.
-                for await (const doc of friendRequests) {
-                    let temp = new ServerFriendRequest({...doc});
-                    temp = temp.export(user._id.toString());
-                    newFriendRequests.push(temp);
-                }
-
-                let out = {
-                    data: newFriendRequests,
-                };
-
-                await client.close();
-
-                return NextResponse.json(out);
+            let newFriendRequests : Array<ServerFriendRequest> = []; //a new array of friend requests from the friend requests objects from the database.
+            for await (const doc of friendRequests) {
+                let temp = new ServerFriendRequest({...doc});
+                temp = temp.export(user._id.toString());
+                newFriendRequests.push(temp);
             }
 
+            let out = {
+                data: newFriendRequests,
+            };
+
+            await client.close();
+
+            return NextResponse.json(out);
             
         } catch (err) {
             console.log(err);

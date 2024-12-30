@@ -21,6 +21,11 @@ export const POST = async function(req: Request) {
 
                     let user = await userCollection.findOne<ServerUser>({email: session?.user?.email});
 
+                    if (user === null) {
+                        await client.close();
+                        return NextResponse.json({ message: "Unauthorized. No account exists." }, { status: 401 })
+                    }
+
                     //get the friends of the current user
                     let friends : Array<ObjectId> = [];
                     if (user !== null && user.friends !== undefined) {

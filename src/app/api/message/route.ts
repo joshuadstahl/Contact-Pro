@@ -138,51 +138,50 @@ export const POST = async function(req: Request) {
 
                 let user = await userCollection.findOne<ServerUser>({email: session?.user?.email});
 
-                if (user !== null) {
-                    let _id = body._id !== undefined ? body._id : "";
-                    let currUserID = user._id.toString();
-                    try {
-                        let newM = new incomingNewMessage({...body, currUserID:currUserID});
-                        let verified = await newM.verify(currUserID, db);
-                        if (verified) {
-                            let newID = await newM.submit(currUserID, db);
-							await client.close();
-                            if (newID !== false) {
-                                let res = await sendWSMessage({msgType: "message", data: {
-									_id: newID,
-									oldID: _id,
-									chatID: newM.chatID,
-									message: newM.message,
-									messageData: newM.messageData,
-									messageType: newM.messageType,
-									sender: newM.sender,
-									timestamp: newM.timestamp,
-									members: newM.chat?.members ?? []
-								}});
-
-								await client.close();
-								return NextResponse.json({ message: "Successfully created message.", data: {_id: newID}}, { status: 201 });
-                            }
-                            else {
-								await client.close();
-                                return NextResponse.json({ message: "Unable to create message."}, { status: 500 });
-                            }
-
-                        }
-                        else {
-							await client.close();
-                            return NextResponse.json({ message: "Action forbidden. User not a part of the submitted chat."}, { status: 403 });
-                        }
-                    }
-                    catch (err) {
-						await client.close();
-                        return NextResponse.json({ message: "Unable to create message.", err:{err}}, { status: 500 });
-                    }
-                }
-                else {
+				if (user === null) {
 					await client.close();
-                    return NextResponse.json({ message: "Unable to retrieve current user."}, { status: 500 });
-                }
+					return NextResponse.json({ message: "Unauthorized. No account exists." }, { status: 401 })
+				}
+
+				let _id = body._id !== undefined ? body._id : "";
+				let currUserID = user._id.toString();
+				try {
+					let newM = new incomingNewMessage({...body, currUserID:currUserID});
+					let verified = await newM.verify(currUserID, db);
+					if (verified) {
+						let newID = await newM.submit(currUserID, db);
+						await client.close();
+						if (newID !== false) {
+							let res = await sendWSMessage({msgType: "message", data: {
+								_id: newID,
+								oldID: _id,
+								chatID: newM.chatID,
+								message: newM.message,
+								messageData: newM.messageData,
+								messageType: newM.messageType,
+								sender: newM.sender,
+								timestamp: newM.timestamp,
+								members: newM.chat?.members ?? []
+							}});
+
+							await client.close();
+							return NextResponse.json({ message: "Successfully created message.", data: {_id: newID}}, { status: 201 });
+						}
+						else {
+							await client.close();
+							return NextResponse.json({ message: "Unable to create message."}, { status: 500 });
+						}
+
+					}
+					else {
+						await client.close();
+						return NextResponse.json({ message: "Action forbidden. User not a part of the submitted chat."}, { status: 403 });
+					}
+				}
+				catch (err) {
+					await client.close();
+					return NextResponse.json({ message: "Unable to create message.", err:{err}}, { status: 500 });
+				}
 
             }
         }
