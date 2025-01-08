@@ -45,7 +45,7 @@ export const POST = async function(req: Request) {
                     //make sure the new members of the chat are friends of the creating user
                     for (let i = 0; i < body.members.length; i++) {
                         let member = body.members[i];
-                        if (!friends.find((str) => str == member)) {
+                        if (!friends.find((id) => id.toString() == member)) { //convert objectID to string, because we're not guaranteed "member" is a valid objectID
                             await client.close();
                             return NextResponse.json({ message: "Can't create chat with members that are not friends." }, { status: 400 });
                         }
