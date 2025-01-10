@@ -656,7 +656,12 @@ export default function App() {
                     if (!loggingOut.current) {
                         setTimeout(() => {
                             WebSocketConnect(); //try to reconnect
-                            timeout *= 2; //increase the timeout each time
+
+                            //as long as the timeout isn't too big, increase it
+                            //timout limit is 6400 milliseconds
+                            if (timeout < 5000) {
+                                timeout *= 2; //increase the timeout
+                            }
                             console.log(timeout);
                         }, timeout)
                     }
@@ -719,7 +724,7 @@ export default function App() {
                 if (!loggingOut.current) {
                     setTimeout(() => {
                         WebSocketConnect(); //try to reconnect
-                    }, 50000) //wait five seconds, then reconnect
+                    }, 5000) //wait five seconds, then reconnect
                 }
                 
 
