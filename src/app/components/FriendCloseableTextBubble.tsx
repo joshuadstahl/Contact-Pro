@@ -3,7 +3,7 @@ import CloseableTextBubble from "./ClosableTextBubble";
 import ProfilePhoto from "./photo/profilePhoto";
 
 
-export default function FriendCloseableTextBubble({name, username, photo, className, xCallback} : {name: string, username: string, photo: string, className?:String, xCallback: Function}) {
+export default function FriendCloseableTextBubble({name, username, photo, className, xCallback} : {name: string, username: string, photo: string, className?:String, xCallback: () => void}) {
 
     return (
         <CloseableTextBubble className={"bg-moss_green-200" + ' ' + className} xCallback={xCallback}>

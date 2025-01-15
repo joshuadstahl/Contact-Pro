@@ -15,7 +15,7 @@ import AddNewFriendRequestModal from '../modals/AddNewFriendRequestModal';
 
 function ChatWindow({chatID, userRepo, sendWSMessage, addNewMessage, chatGroups, chatGroupsUpdater, oldestUnreadMessageID, 
     addingChat, setAddingChat, addingFriendRequest, setAddingFriendRequest, friends, friendRequests, friendRequestsUpdater, userRepoUpdater} : {chatID: string, userRepo: userRepository, sendWSMessage: (message: object|string) => void, 
-        addNewMessage: Function, chatGroups: chatRepository, chatGroupsUpdater: Function, oldestUnreadMessageID: string, 
+        addNewMessage: (msg: MessageClass, chatID: string) => void, chatGroups: chatRepository, chatGroupsUpdater: (chatRepo: chatRepository) => void, oldestUnreadMessageID: string, 
          addingChat: boolean, setAddingChat: (adding: boolean) => void, addingFriendRequest: boolean, setAddingFriendRequest: (adding: boolean) => void, 
          friends:Array<string>, friendRequests: friendRequestRepository, friendRequestsUpdater: (friendRequests: friendRequestRepository) => void, 
          userRepoUpdater: (userRepo: userRepository) => void}) {

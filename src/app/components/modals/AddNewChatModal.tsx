@@ -12,7 +12,7 @@ import InvisibleTextBubble from "../InvisibleTextBubble";
 import ProfilePhoto from "../photo/profilePhoto";
 
 
-export default function AddNewChatModal({open, setOpen, chatGroups, chatGroupsUpdater, sendWSMessage, inputFriends}: {open: boolean, setOpen: Function, chatGroups:chatRepository, chatGroupsUpdater: Function, sendWSMessage: Function, inputFriends: Array<string>}) {
+export default function AddNewChatModal({open, setOpen, chatGroups, chatGroupsUpdater, sendWSMessage, inputFriends}: {open: boolean, setOpen: (open: boolean) => void, chatGroups:chatRepository, chatGroupsUpdater: (chatgroups: chatRepository) => void, sendWSMessage: (msg: Object) => void, inputFriends: Array<string>}) {
 
     interface friendSearchItem {
         name: string,

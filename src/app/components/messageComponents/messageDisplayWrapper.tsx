@@ -7,7 +7,7 @@ import NewMessageSeperator from "./newMessageSeperator";
 import { useEffect } from "react";
 
 //takes in a Chat object, and the id of the oldest unread message (if applicable)
-export default function MessageDisplayWrapper({chat, unreadMessagesStartID, messageResendCallback} : {chat: Chat, unreadMessagesStartID: string, messageResendCallback: (msg: MessageC) => {}}) {
+export default function MessageDisplayWrapper({chat, unreadMessagesStartID, messageResendCallback} : {chat: Chat, unreadMessagesStartID: string, messageResendCallback: (msg: MessageC) => void}) {
 
     let lastDate = ""; //the date of the last message processed
     let lastSender = ""; //the sender of the last message processed

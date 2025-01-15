@@ -7,7 +7,7 @@ import { randomUsername } from "../../functions/functions";
 
 
 
-export default function OnboardingModal({currUser, userRepo, setUserRepo, pageLoaded, onboardingComplete, setOnboardingComplete} : {currUser: string, userRepo:userRepository, setUserRepo: Function, pageLoaded: boolean, onboardingComplete: boolean, setOnboardingComplete: Function}) {
+export default function OnboardingModal({currUser, userRepo, setUserRepo, pageLoaded, onboardingComplete, setOnboardingComplete} : {currUser: string, userRepo:userRepository, setUserRepo: (userRepo: userRepository) => void, pageLoaded: boolean, onboardingComplete: boolean, setOnboardingComplete: (complete: boolean) => void}) {
     
     const [newUsername, setNewUsername] = useState(randomUsername()); //keeps track of the new username's value
     const [errorDisplayed, setErrorDisplayed] = useState(false); //handles if the error text on the text box is displayed or not

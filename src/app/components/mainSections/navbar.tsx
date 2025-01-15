@@ -8,6 +8,7 @@ import { GetColorBgClass, GetColorTextClass, GetStatusName } from '../../functio
 import DropdownMenuItem from "../dropdownMenuItem";
 import { userStatus, User } from "../../classes/user";
 import { userAgent } from "next/server";
+import { userRepository } from "@/app/app/page";
 
 const assistant = Assistant(
     { 
@@ -15,7 +16,7 @@ const assistant = Assistant(
     }
 );
 
-export default function Navbar({sendWSMessage, setStatus, updateUserRepo, toggleLogoutModal} : {sendWSMessage:Function, setStatus: Function, updateUserRepo: Function, toggleLogoutModal: Function}) {
+export default function Navbar({sendWSMessage, setStatus, updateUserRepo, toggleLogoutModal} : {sendWSMessage: (msg: Object) => void, setStatus: (usr: string, usrStatus: userStatus) => void, updateUserRepo: (usrRepo: userRepository) => void, toggleLogoutModal: () => void}) {
     const currUserContext = useContext(CurrentUserContext); //the current user's id
     const userRepo = useContext(UserRepositoryContext); //the user repository
     let currUser = userRepo[currUserContext]; //get the current user object

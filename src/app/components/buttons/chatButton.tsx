@@ -6,7 +6,7 @@ import { CurrentUserContext } from '../../context/currentUserContext';
 import { UserRepositoryContext } from '../../context/userRepositoryContext';
 import { chatRepository } from '../../app/page';
 
-export default function ChatButton({chats, chatID, selected, setSelected, title = ""}: {chats: chatRepository, chatID: string, selected: boolean, setSelected: Function, title?: string}) {
+export default function ChatButton({chats, chatID, selected, setSelected, title = ""}: {chats: chatRepository, chatID: string, selected: boolean, setSelected: (chatID: string) => void, title?: string}) {
 
     //get the current application user from the context API
     const currUser = useContext(CurrentUserContext);

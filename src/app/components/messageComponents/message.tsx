@@ -7,7 +7,7 @@ import { UserRepositoryContext } from "../../context/userRepositoryContext";
 import { GetFancyDate } from "../../functions/functions";
 
 
-export default function Message({theMessage, type, messageResendCallback} : {theMessage: MessageClass, type: msgDisplayType, messageResendCallback: (msg: MessageClass) => {}}) {
+export default function Message({theMessage, type, messageResendCallback} : {theMessage: MessageClass, type: msgDisplayType, messageResendCallback: (msg: MessageClass) => void}) {
     
     const currUser = useContext(CurrentUserContext);
     const userRepo = useContext(UserRepositoryContext);
