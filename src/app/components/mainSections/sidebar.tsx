@@ -11,6 +11,7 @@ import FriendRequestTile from '../friendRequestTile';
 import { UserRepositoryContext } from '../../context/userRepositoryContext';
 import { FriendRequest } from '../../classes/friendRequest';
 import { CurrentUserContext } from '../../context/currentUserContext';
+import ToggleButton from '../buttons/toggleButton';
 
 function Sidebar({chats, setChats, selectedChatID, selectedChatToggler, addingChat, setAddingChat, addingFriendRequest, setAddingFriendRequest, friendRequests, setFriendRequests, friends, setFriends, sendWSMessage} : {chats: chatRepository, setChats: (chats: chatRepository) => void, selectedChatID: string, selectedChatToggler: (chatID: string) => void, addingChat:boolean, setAddingChat: (addingChat: boolean) => void, addingFriendRequest: boolean, setAddingFriendRequest: (adding: boolean) => void, friendRequests: friendRequestRepository, setFriendRequests: (friendRequests: friendRequestRepository) => void, friends: Array<string>, setFriends: (friends: Array<string>) => void, sendWSMessage: (message: object|string) => void}) {
 
@@ -229,22 +230,16 @@ function Sidebar({chats, setChats, selectedChatID, selectedChatToggler, addingCh
 
 
     return (
-        <div className="basis-1/3 p-2.5
+        <div className="basis-1/3 p-5
         border-solid border-1 border-cadet_gray-300 rounded-l-my
         bg-ghost_white flex flex-col flex-cols-2 resize-x">
 
-            <h1 className='text-2xl	text-center mt-2.5 shrink-0'>Menu</h1>   
-            <div className='flex flex-row flex-rows-1 mt-5 mb-7 gap-5 xl:gap-8 justify-center shrink-0'>
-                
-                <div className='flex flex-row justify-end'>
-                    <NotifyButton notificationCount={groupChatNotificationCount} text="Chats" onClick={() => buttonToggler(0)} selected={selectedButton[0]} colorStyling='Light' color='PrimaryAlt' outline={true}/>
-                </div> 
-                <div className='flex flex-row justify-start'>
-                    <NotifyButton notificationCount={friendsButtonNotificationCount} text="Friends" onClick={() => buttonToggler(1)} selected={selectedButton[1]} colorStyling='Light' color='PrimaryAlt' outline={true}/>
-                </div>
-            </div>
+            <h1 className='text-2xl	text-center mt-2.5 mb-5 shrink-0'>Menu</h1>
 
-            <div className='flex flex-col mb-5 min-h-0 grow'>
+            <ToggleButton leftButtonSelected={selectedButton[0]} leftButtonText="Chats" rightButtonText="Friends" leftButtonNotifyCount={groupChatNotificationCount} 
+                rightButtonNotifyCount={friendsButtonNotificationCount} leftButtonOnClick={() => buttonToggler(0)} rightButtonOnClick={() => buttonToggler(1)}/>
+
+            <div className='flex flex-col mb-5 min-h-0 grow mt-5'>
                 
                 {/* These are the headers for the tabs */}
                 <div className='flex flex-row flex-nowrap items-center'>
@@ -273,14 +268,11 @@ function Sidebar({chats, setChats, selectedChatID, selectedChatToggler, addingCh
 
                 <div className={"flex flex-col flex-nowrap gap-1 " + (selectedButton[1] ? "block" : "hidden")}>
                     {/* Tab switching buttons within Friends Tab */}
-                    <div className={"flex flex-row flex-nowrap items-center gap-4 mt-1.5"}>
-                        <NotifyButton notificationCount={friendChatNotificationCount} text='Friends' colorStyling='Light' color='Grayscale' outline={true} size='XS' selected={friendsSelectedButton[0]} onClick={() => friendsButtonToggler(0)}/>
-                        <NotifyButton notificationCount={friendRequestNotificationCount} text='Requests' colorStyling='Light' color='Grayscale' outline={true} size='XS' selected={friendsSelectedButton[1]} onClick={() => friendsButtonToggler(1)}/>
-                        
-                    </div>
+                    <ToggleButton size="XS" leftButtonSelected={friendsSelectedButton[0]} leftButtonText="Friends" rightButtonText="Requests" leftButtonNotifyCount={friendChatNotificationCount} 
+                        rightButtonNotifyCount={friendRequestNotificationCount} leftButtonOnClick={() => friendsButtonToggler(0)} rightButtonOnClick={() => friendsButtonToggler(1)} fullWidth={false}/>
 
                     {/** Grey line below friends tab switching buttons */}
-                    <div className="flex flex-row flex-nowrap items-center mt-1.5">
+                    <div className="flex flex-row flex-nowrap items-center">
                         <div className="grow h-0 border-1 border-cadet_gray-300" ></div>
                     </div>
                     
